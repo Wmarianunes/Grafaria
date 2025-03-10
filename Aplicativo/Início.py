@@ -28,6 +28,7 @@ funcionalidades do site. Em cada aba haverá uma explicação sobre a
          
 ## Quais são as funções disponíveis?
 • Upload de arquivos DTA para conversão para XLSX  
+
 • Plot de gráficos de Impedância x Tempo decorrido (Só aceita arquivos XLSX)
 
 • Plot de gráficos Z real x Z Imaginário (Só aceita arquivos XLSX)
