@@ -33,6 +33,8 @@ funcionalidades do site. Em cada aba haverá uma explicação sobre a
 
 • Plot de gráficos Z real x Z Imaginário (Só aceita arquivos XLSX)
 
+
+
 Desenvolvido por Maria Eduarda Nunes em fevereiro de 2025
 """) #Markdown
 
