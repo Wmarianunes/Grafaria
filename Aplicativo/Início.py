@@ -35,11 +35,5 @@ funcionalidades do site. Em cada aba haverá uma explicação sobre a
 
 
 
-Desenvolvido por Maria Eduarda Nunes em fevereiro de 2025
+#####Desenvolvido por Maria Eduarda Nunes em fevereiro de 2025
 """) #Markdown
-
-# 🚀 **Novo upload de arquivos sem Tkinter**
-uploaded_files = st.file_uploader("Selecione os arquivos", type=["xlsx", "dta"], accept_multiple_files=True)
-
-# 🚀 **Escolher nome da pasta de saída**
-pasta_saida = st.text_input("Nome da pasta de saída", "Resultados")
