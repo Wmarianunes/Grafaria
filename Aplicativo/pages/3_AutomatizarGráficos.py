@@ -86,16 +86,16 @@ uploaded_files = st.file_uploader("Selecione os arquivos Excel", type=["xlsx"], 
 pasta_saida = st.text_input("Nome da pasta de saída", "Graficos_Gerados")
 
 # Escolha de gráficos
-gerar_combinado = st.checkbox("Gerar gráfico combinado (todos os arquivos juntos)")
+gerar_combinado = st.checkbox("Gerar gráfico combinado com todos os arquivos juntos")
 gerar_individual = st.checkbox("Gerar gráficos individuais para cada arquivo")
 
 # Configuração do toggle e entrada de texto
-exibir_rotulos = st.toggle("Exibir rótulos nos últimos pontos")
+exibir_rotulos = st.toggle("Exibir frequência nos últimos pontos")
 mostrar_legenda = st.checkbox("Mostrar legenda no gráfico", value=True)
 rotulo_pontos = ""
 
 if exibir_rotulos:
-    rotulo_pontos = st.text_input("Digite o rótulo para o último ponto de todos os gráficos:")
+    rotulo_pontos = st.text_input("Digite a frequência para o último ponto de todos os gráficos:")
 
 # Processamento dos arquivos
 if uploaded_files and pasta_saida:
