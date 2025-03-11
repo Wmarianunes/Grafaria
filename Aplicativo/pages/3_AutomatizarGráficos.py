@@ -26,7 +26,7 @@ def criar_nome_seguro(titulo):
     return "".join([c if c.isalnum() or c in (' ', '.', '_') else '_' for c in titulo])
 
 # Gerar gráfico combinado
-def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, frequencias, mostrar_preview):
+def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, frequencias):
     """Gera e salva um gráfico combinado no ZIP, com opção de rótulos nos últimos pontos."""
     try:
         img_bytes = BytesIO()
@@ -67,9 +67,8 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, freque
         with open(historico_path, "wb") as f:
             f.write(img_bytes.getvalue())
 
-        # Exibir pré-visualização no Streamlit, se ativado
-        if mostrar_preview:
-            st.image(img_bytes.getvalue(), caption=titulo, use_column_width=True)
+        # Exibir pré-visualização no Streamlit SEM OPÇÃO DE DESATIVAR
+        st.image(img_bytes.getvalue(), caption=titulo, use_column_width=True)
 
     except Exception as e:
         st.error(f"Erro ao gerar gráfico combinado: {e}")
@@ -89,19 +88,16 @@ pasta_saida = st.text_input("Nome da pasta de saída", "Graficos_Gerados")
 # Escolha de gráficos
 gerar_combinado = st.checkbox("Gerar gráfico combinado (todos os arquivos juntos)")
 
-# Opção para exibir rótulos nos últimos pontos
-exibir_rotulos = st.checkbox("Exibir rótulos nos últimos pontos com a frequência inserida")
+# Opção para exibir rótulos nos últimos pontos como Toggle
+exibir_rotulos = st.toggle("Exibir rótulos nos últimos pontos")
 
 # Dicionário para armazenar frequências inseridas pelo usuário
 frequencias = {}
 
-# Solicita que o usuário digite a frequência para cada arquivo
+# Solicita que o usuário digite a frequência para cada arquivo se o toggle estiver ativado
 if uploaded_files and exibir_rotulos:
     for uploaded_file in uploaded_files:
         frequencias[uploaded_file.name] = st.text_input(f"Digite a frequência para {uploaded_file.name}:", "")
-
-# Opção para mostrar pré-visualização do gráfico combinado
-mostrar_preview = st.checkbox("Mostrar pré-visualização do gráfico combinado antes de baixar")
 
 # Processamento dos arquivos
 if uploaded_files and pasta_saida and gerar_combinado:
@@ -119,7 +115,7 @@ if uploaded_files and pasta_saida and gerar_combinado:
                 dados_graficos.append((df, titulo))
 
         if gerar_combinado and dados_graficos:
-            gerar_grafico_combinado(dados_graficos, f"{pasta_saida}_combinado", zipf, exibir_rotulos, frequencias, mostrar_preview)
+            gerar_grafico_combinado(dados_graficos, f"{pasta_saida}_combinado", zipf, exibir_rotulos, frequencias)
 
     # Finalizar ZIP
     zip_buffer.seek(0)
@@ -148,3 +144,4 @@ if historico_arquivos:
             )
 else:
     st.write("Nenhum gráfico gerado ainda.")
+
