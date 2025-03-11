@@ -89,17 +89,15 @@ pasta_saida = st.text_input("Nome da pasta de saída", "Graficos_Gerados")
 gerar_combinado = st.checkbox("Gerar gráfico combinado (todos os arquivos juntos)")
 gerar_individual = st.checkbox("Gerar gráficos individuais para cada arquivo")
 
-# Opção para exibir rótulos nos últimos pontos como Toggle em colunas
+# Configuração do toggle e entrada de texto
 cols = st.columns(2)
 exibir_rotulos = cols[0].toggle("Exibir rótulos nos últimos pontos")
-
-# Dicionário para armazenar frequências inseridas pelo usuário
 frequencias = {}
 
-# Solicita que o usuário digite a frequência para cada arquivo se o toggle estiver ativado
-if uploaded_files and exibir_rotulos:
+if exibir_rotulos and uploaded_files:
     for uploaded_file in uploaded_files:
-        frequencias[uploaded_file.name] = cols[1].text_area(f"Digite o valor do rótulo para {uploaded_file.name}:", "")
+        with cols[1]:
+            frequencias[uploaded_file.name] = st.text_input(f"Digite o valor do rótulo para {uploaded_file.name}:", "")
 
 # Processamento dos arquivos
 if uploaded_files and pasta_saida:
