@@ -44,7 +44,7 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
                 ultimo_ponto = df.iloc[-1]  # Última linha da tabela
                 plt.annotate(rotulo_pontos, 
                              (ultimo_ponto["Zreal"], -ultimo_ponto["Zimag"]),
-                             fontsize=9, ha='right', color='red')
+                             fontsize=9, ha='right', color='black')
 
         plt.xlim(0, max_val * 1.1)
         plt.ylim(0, max_val * 1.1)
