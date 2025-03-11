@@ -26,7 +26,7 @@ def criar_nome_seguro(titulo):
     return "".join([c if c.isalnum() or c in (' ', '.', '_') else '_' for c in titulo])
 
 # Gerar gráfico combinado
-def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo_final):
+def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, frequencias, mostrar_legenda):
     """Gera e salva um gráfico combinado no ZIP, com opção de rótulos nos últimos pontos."""
     try:
         img_bytes = BytesIO()
@@ -40,9 +40,10 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
             max_val = max(max_val, df["Zreal"].max(), df["Zimag"].max())
 
             # Adicionar rótulos apenas nos últimos pontos se ativado
-            if exibir_rotulos and rotulo_final:
+            if exibir_rotulos and legenda in frequencias:
                 ultimo_ponto = df.iloc[-1]  # Última linha da tabela
-                plt.annotate(rotulo_final, 
+                freq_texto = frequencias[legenda]  # Busca a frequência inserida pelo usuário
+                plt.annotate(freq_texto, 
                              (ultimo_ponto["Zreal"], -ultimo_ponto["Zimag"]),
                              fontsize=9, ha='right', color='red')
 
@@ -52,7 +53,8 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
         plt.grid(True, which='both', linestyle='--', linewidth=0.5)
         plt.xlabel("Z real (ohm.cm^2)")
         plt.ylabel("-Z imag (ohm.cm^2)")
-        plt.legend()
+        if mostrar_legenda:
+            plt.legend()
 
         plt.title(titulo)
         plt.savefig(img_bytes, format="png", dpi=300)
@@ -66,8 +68,8 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
         with open(historico_path, "wb") as f:
             f.write(img_bytes.getvalue())
 
-        # Exibir pré-visualização no Streamlit
-        st.image(img_bytes.getvalue(), caption=titulo, use_column_width=True)
+        # Exibir pré-visualização no Streamlit SEM OPÇÃO DE DESATIVAR
+        st.image(img_bytes.getvalue(), caption=titulo, use_container_width=True)
 
     except Exception as e:
         st.error(f"Erro ao gerar gráfico combinado: {e}")
@@ -89,10 +91,13 @@ gerar_combinado = st.checkbox("Gerar gráfico combinado (todos os arquivos junto
 gerar_individual = st.checkbox("Gerar gráficos individuais para cada arquivo")
 
 # Configuração do toggle e entrada de texto
-exibir_rotulos = st.toggle("Exibir frequência nos últimos pontos")
-rotulo_final = ""
-if exibir_rotulos:
-    rotulo_final = st.text_input("Digite a frequência:")
+exibir_rotulos = st.toggle("Exibir a frequência nos últimos pontos")
+mostrar_legenda = st.checkbox("Mostrar legenda no gráfico", value=True)
+frequencias = {}
+
+if exibir_rotulos and uploaded_files:
+    for uploaded_file in uploaded_files:
+        frequencias = st.text_input(f"Digite a frequência:")
 
 # Processamento dos arquivos
 if uploaded_files and pasta_saida:
@@ -110,10 +115,10 @@ if uploaded_files and pasta_saida:
                 dados_graficos.append((df, titulo))
 
                 if gerar_individual:
-                    gerar_grafico_combinado([(df, titulo)], titulo, zipf, exibir_rotulos, rotulo_final)
+                    gerar_grafico_combinado([(df, titulo)], titulo, zipf, exibir_rotulos, frequencias, mostrar_legenda)
 
         if gerar_combinado and dados_graficos:
-            gerar_grafico_combinado(dados_graficos, f"{pasta_saida}_combinado", zipf, exibir_rotulos, rotulo_final)
+            gerar_grafico_combinado(dados_graficos, f"{pasta_saida}_combinado", zipf, exibir_rotulos, frequencias, mostrar_legenda)
 
     # Finalizar ZIP
     zip_buffer.seek(0)
