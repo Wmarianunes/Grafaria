@@ -149,3 +149,4 @@ if historico_arquivos:
             )
 else:
     st.write("Nenhum gráfico gerado ainda.")
+
