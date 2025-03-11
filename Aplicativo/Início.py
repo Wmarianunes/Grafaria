@@ -35,5 +35,5 @@ funcionalidades do site. Em cada aba haverá uma explicação sobre a
 
 
 
-############ Desenvolvido por Maria Eduarda Nunes em fevereiro de 2025
+######## Desenvolvido por Maria Eduarda Nunes em fevereiro de 2025
 """) #Markdown
