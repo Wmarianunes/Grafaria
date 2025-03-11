@@ -89,10 +89,10 @@ gerar_combinado = st.checkbox("Gerar gráfico combinado (todos os arquivos junto
 gerar_individual = st.checkbox("Gerar gráficos individuais para cada arquivo")
 
 # Configuração do toggle e entrada de texto
-exibir_rotulos = st.checkbox("Exibir rótulos nos últimos pontos")
+exibir_rotulos = st.toggle("Exibir frequência nos últimos pontos")
 rotulo_final = ""
 if exibir_rotulos:
-    rotulo_final = st.text_input("Digite o rótulo para os últimos pontos:")
+    rotulo_final = st.text_input("Digite a frequência:")
 
 # Processamento dos arquivos
 if uploaded_files and pasta_saida:
