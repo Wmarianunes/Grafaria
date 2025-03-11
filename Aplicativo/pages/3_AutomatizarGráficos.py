@@ -91,13 +91,13 @@ gerar_combinado = st.checkbox("Gerar gráfico combinado (todos os arquivos junto
 gerar_individual = st.checkbox("Gerar gráficos individuais para cada arquivo")
 
 # Configuração do toggle e entrada de texto
-exibir_rotulos = st.toggle("Exibir a frequência nos últimos pontos")
+exibir_rotulos = st.toggle("Exibir rótulos nos últimos pontos")
 mostrar_legenda = st.checkbox("Mostrar legenda no gráfico", value=True)
 frequencias = {}
 
 if exibir_rotulos and uploaded_files:
     for uploaded_file in uploaded_files:
-        frequencias = st.text_input(f"Digite a frequência:")
+        frequencias[uploaded_file.name] = st.text_input(f"Digite o rótulo para o ponto final de {uploaded_file.name}:")
 
 # Processamento dos arquivos
 if uploaded_files and pasta_saida:
