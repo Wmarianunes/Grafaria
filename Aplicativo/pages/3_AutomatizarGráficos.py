@@ -86,11 +86,12 @@ uploaded_files = st.file_uploader("Selecione os arquivos Excel", type=["xlsx"], 
 pasta_saida = st.text_input("Nome da pasta de saída", "Graficos_Gerados")
 
 # Escolha de gráficos
-gerar_combinado = st.checkbox("Gerar gráfico combinado com todos os arquivos juntos")
+gerar_combinado = st.checkbox("Gerar gráfico combinado (todos os arquivos juntos)")
 gerar_individual = st.checkbox("Gerar gráficos individuais para cada arquivo")
 
-# Opção para exibir rótulos nos últimos pontos como Toggle
-exibir_rotulos = st.toggle("Exibir rótulos nos últimos pontos")
+# Opção para exibir rótulos nos últimos pontos como Toggle em colunas
+cols = st.columns(2)
+exibir_rotulos = cols[0].toggle("Exibir rótulos nos últimos pontos")
 
 # Dicionário para armazenar frequências inseridas pelo usuário
 frequencias = {}
@@ -98,7 +99,7 @@ frequencias = {}
 # Solicita que o usuário digite a frequência para cada arquivo se o toggle estiver ativado
 if uploaded_files and exibir_rotulos:
     for uploaded_file in uploaded_files:
-        frequencias[uploaded_file.name] = st.text_input(f"Digite o valor do rótulo para {uploaded_file.name}:", "")
+        frequencias[uploaded_file.name] = cols[1].text_area(f"Digite o valor do rótulo para {uploaded_file.name}:", "")
 
 # Processamento dos arquivos
 if uploaded_files and pasta_saida:
