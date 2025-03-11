@@ -26,7 +26,7 @@ def criar_nome_seguro(titulo):
     return "".join([c if c.isalnum() or c in (' ', '.', '_') else '_' for c in titulo])
 
 # Gerar gráfico combinado
-def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, frequencias, mostrar_legenda):
+def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda):
     """Gera e salva um gráfico combinado no ZIP, com opção de rótulos nos últimos pontos."""
     try:
         img_bytes = BytesIO()
@@ -39,11 +39,10 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, freque
             plt.scatter(df["Zreal"], -df["Zimag"], marker=marcador, label=legenda)
             max_val = max(max_val, df["Zreal"].max(), df["Zimag"].max())
 
-            # Adicionar rótulos apenas nos últimos pontos se ativado
-            if exibir_rotulos and legenda in frequencias:
+            # Adicionar rótulo apenas no último ponto de cada conjunto de dados
+            if exibir_rotulos and rotulo_pontos:
                 ultimo_ponto = df.iloc[-1]  # Última linha da tabela
-                freq_texto = frequencias[legenda]  # Busca a frequência inserida pelo usuário
-                plt.annotate(freq_texto, 
+                plt.annotate(rotulo_pontos, 
                              (ultimo_ponto["Zreal"], -ultimo_ponto["Zimag"]),
                              fontsize=9, ha='right', color='red')
 
@@ -93,11 +92,10 @@ gerar_individual = st.checkbox("Gerar gráficos individuais para cada arquivo")
 # Configuração do toggle e entrada de texto
 exibir_rotulos = st.toggle("Exibir rótulos nos últimos pontos")
 mostrar_legenda = st.checkbox("Mostrar legenda no gráfico", value=True)
-frequencias = {}
+rotulo_pontos = ""
 
-if exibir_rotulos and uploaded_files:
-    for uploaded_file in uploaded_files:
-        frequencias[uploaded_file.name] = st.text_input(f"Digite o rótulo para o ponto final de {uploaded_file.name}:")
+if exibir_rotulos:
+    rotulo_pontos = st.text_input("Digite o rótulo para o último ponto de todos os gráficos:")
 
 # Processamento dos arquivos
 if uploaded_files and pasta_saida:
@@ -115,10 +113,10 @@ if uploaded_files and pasta_saida:
                 dados_graficos.append((df, titulo))
 
                 if gerar_individual:
-                    gerar_grafico_combinado([(df, titulo)], titulo, zipf, exibir_rotulos, frequencias, mostrar_legenda)
+                    gerar_grafico_combinado([(df, titulo)], titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda)
 
         if gerar_combinado and dados_graficos:
-            gerar_grafico_combinado(dados_graficos, f"{pasta_saida}_combinado", zipf, exibir_rotulos, frequencias, mostrar_legenda)
+            gerar_grafico_combinado(dados_graficos, f"{pasta_saida}_combinado", zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda)
 
     # Finalizar ZIP
     zip_buffer.seek(0)
