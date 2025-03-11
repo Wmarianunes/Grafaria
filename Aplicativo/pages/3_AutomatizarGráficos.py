@@ -40,9 +40,9 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, freque
             max_val = max(max_val, df["Zreal"].max(), df["Zimag"].max())
 
             # Adicionar rótulos apenas nos últimos pontos se ativado
-            if exibir_rotulos:
+            if exibir_rotulos and legenda in frequencias:
                 ultimo_ponto = df.iloc[-1]  # Última linha da tabela
-                freq_texto = frequencias.get(legenda, "Sem frequência informada")  # Busca a frequência inserida pelo usuário
+                freq_texto = frequencias[legenda]  # Busca a frequência inserida pelo usuário
                 plt.annotate(freq_texto, 
                              (ultimo_ponto["Zreal"], -ultimo_ponto["Zimag"]),
                              fontsize=9, ha='right', color='red')
@@ -86,7 +86,8 @@ uploaded_files = st.file_uploader("Selecione os arquivos Excel", type=["xlsx"], 
 pasta_saida = st.text_input("Nome da pasta de saída", "Graficos_Gerados")
 
 # Escolha de gráficos
-gerar_combinado = st.checkbox("Gerar gráfico combinado (todos os arquivos juntos)")
+gerar_combinado = st.checkbox("Gerar gráfico combinado com todos os arquivos juntos")
+gerar_individual = st.checkbox("Gerar gráficos individuais para cada arquivo")
 
 # Opção para exibir rótulos nos últimos pontos como Toggle
 exibir_rotulos = st.toggle("Exibir rótulos nos últimos pontos")
@@ -97,10 +98,10 @@ frequencias = {}
 # Solicita que o usuário digite a frequência para cada arquivo se o toggle estiver ativado
 if uploaded_files and exibir_rotulos:
     for uploaded_file in uploaded_files:
-        frequencias[uploaded_file.name] = st.text_input(f"Digite a frequência para {uploaded_file.name}:", "")
+        frequencias[uploaded_file.name] = st.text_input(f"Digite o valor do rótulo para {uploaded_file.name}:", "")
 
 # Processamento dos arquivos
-if uploaded_files and pasta_saida and gerar_combinado:
+if uploaded_files and pasta_saida:
     arquivos_processados = []
 
     # Criar arquivo ZIP temporário para salvar os gráficos
@@ -111,8 +112,11 @@ if uploaded_files and pasta_saida and gerar_combinado:
         for uploaded_file in uploaded_files:
             df = carregar_planilha(uploaded_file)
             if df is not None:
-                titulo = f"{uploaded_file.name.replace('.xlsx', '')}_grafico_combinado"
+                titulo = f"{uploaded_file.name.replace('.xlsx', '')}_grafico"
                 dados_graficos.append((df, titulo))
+
+                if gerar_individual:
+                    gerar_grafico_combinado([(df, titulo)], titulo, zipf, exibir_rotulos, frequencias)
 
         if gerar_combinado and dados_graficos:
             gerar_grafico_combinado(dados_graficos, f"{pasta_saida}_combinado", zipf, exibir_rotulos, frequencias)
@@ -144,4 +148,3 @@ if historico_arquivos:
             )
 else:
     st.write("Nenhum gráfico gerado ainda.")
-
