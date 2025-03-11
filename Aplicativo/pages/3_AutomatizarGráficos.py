@@ -67,7 +67,7 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, freque
         with open(historico_path, "wb") as f:
             f.write(img_bytes.getvalue())
 
-        # Exibir pré-visualização no Streamlit SEM OPÇÃO DE DESATIVAR
+        # Exibir pré-visualização no Streamlit
         st.image(img_bytes.getvalue(), caption=titulo, use_column_width=True)
 
     except Exception as e:
@@ -90,7 +90,7 @@ gerar_combinado = st.checkbox("Gerar gráfico combinado (todos os arquivos junto
 gerar_individual = st.checkbox("Gerar gráficos individuais para cada arquivo")
 
 # Configuração do toggle e entrada de texto
-exibir_rotulos = st.toggle("Exibir rótulos nos últimos pontos")
+exibir_rotulos = st.checkbox("Exibir rótulos nos últimos pontos")
 frequencias = {}
 
 if exibir_rotulos and uploaded_files:
