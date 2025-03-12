@@ -25,55 +25,18 @@ def criar_nome_seguro(titulo):
     """Gera um nome seguro para arquivos."""
     return "".join([c if c.isalnum() or c in (' ', '.', '_') else '_' for c in titulo])
 
-# Gerar gráfico combinado
-def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda):
-    """Gera e salva um gráfico combinado no ZIP, com opção de rótulos nos últimos pontos."""
-    try:
-        img_bytes = BytesIO()
-        plt.figure(figsize=(8, 8))
-        max_val = 0
-        marcadores = ['o', '+', '*', '>', 'x', '^', 'v', '<', '|', '_', 's', 'D', 'p', 'h', 'H']
-
-        for index, (df, legenda) in enumerate(dados_graficos):
-            marcador = marcadores[index % len(marcadores)]
-            plt.scatter(df["Zreal"], -df["Zimag"], marker=marcador, label=legenda)
-            max_val = max(max_val, df["Zreal"].max(), df["Zimag"].max())
-
-            if exibir_rotulos and rotulo_pontos:
-                ultimo_ponto = df.iloc[-1]
-                plt.annotate(rotulo_pontos,  
-                             (ultimo_ponto["Zreal"], -ultimo_ponto["Zimag"]),
-                             fontsize=9, ha='right', color='black')
-
-        plt.xlim(0, max_val * 1.1)
-        plt.ylim(0, max_val * 1.1)
-        plt.gca().set_aspect('equal', adjustable='box')
-        plt.grid(True, which='both', linestyle='--', linewidth=0.5)
-        plt.xlabel("Z real (ohm.cm^2)")
-        plt.ylabel("-Z imag (ohm.cm^2)")
-        if mostrar_legenda:
-            plt.legend()
-
-        plt.title(titulo)
-        plt.savefig(img_bytes, format="png", dpi=300)
-        plt.close()
-
-        zipf.writestr(f"{titulo}.png", img_bytes.getvalue())
-
-        historico_path = os.path.join(HISTORICO_DIR, f"{titulo}.png")
-        with open(historico_path, "wb") as f:
-            f.write(img_bytes.getvalue())
-
-        st.image(img_bytes.getvalue(), caption=titulo, use_container_width=True)
-
-    except Exception as e:
-        st.error(f"Erro ao gerar gráfico combinado: {e}")
-
 # Interface Streamlit
 st.set_page_config(page_title="Gerador de Gráficos", page_icon="📊")
 
 st.title("Gerador de Gráficos Z real x Z imaginário")
 st.write("Faça upload de um ou mais arquivos `.xlsx` e gere gráficos automaticamente.")
+
+# Botão para limpar histórico
+st.subheader("🗑️ Gerenciamento do Histórico")
+if st.button("Limpar Histórico de Gráficos", key="clear_history_button"):
+    for arq in os.listdir(HISTORICO_DIR):
+        os.remove(os.path.join(HISTORICO_DIR, arq))
+    st.rerun()
 
 # Upload de arquivos
 uploaded_files = st.file_uploader("Selecione os arquivos Excel", type=["xlsx"], accept_multiple_files=True)
@@ -138,11 +101,6 @@ if historico_arquivos:
                 file_name=arq,
                 mime="image/png"
             )
-    
-    if st.button("Limpar Histórico"):
-        for arq in historico_arquivos:
-            os.remove(os.path.join(HISTORICO_DIR, arq))
-        st.experimental_rerun()
 else:
     st.write("Nenhum gráfico gerado ainda.")
 
