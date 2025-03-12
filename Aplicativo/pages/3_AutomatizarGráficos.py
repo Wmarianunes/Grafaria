@@ -83,13 +83,6 @@ if uploaded_files and pasta_saida:
 
     st.success("Gráficos gerados! Baixe a pasta compactada acima.")
 
-# Botão para limpar histórico
-st.subheader("🗑️ Gerenciamento do Histórico")
-if st.button("Limpar Histórico de Gráficos", key="clear_history_button"):
-    for arq in os.listdir(HISTORICO_DIR):
-        os.remove(os.path.join(HISTORICO_DIR, arq))
-    st.rerun()
-
 # Exibir histórico de gráficos gerados
 st.subheader("📜 Histórico de gráficos gerados")
 historico_arquivos = os.listdir(HISTORICO_DIR)
@@ -105,3 +98,9 @@ if historico_arquivos:
 else:
     st.write("Nenhum gráfico gerado ainda.")
 
+# Botão para limpar histórico
+st.subheader("🗑️ Gerenciamento do Histórico")
+if st.button("Limpar Histórico de Gráficos", key="clear_history_button"):
+    for arq in os.listdir(HISTORICO_DIR):
+        os.remove(os.path.join(HISTORICO_DIR, arq))
+    st.rerun()
