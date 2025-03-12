@@ -31,12 +31,6 @@ st.set_page_config(page_title="Gerador de Gráficos", page_icon="📊")
 st.title("Gerador de Gráficos Z real x Z imaginário")
 st.write("Faça upload de um ou mais arquivos `.xlsx` e gere gráficos automaticamente.")
 
-# Botão para limpar histórico
-st.subheader("🗑️ Gerenciamento do Histórico")
-if st.button("Limpar Histórico de Gráficos", key="clear_history_button"):
-    for arq in os.listdir(HISTORICO_DIR):
-        os.remove(os.path.join(HISTORICO_DIR, arq))
-    st.rerun()
 
 # Upload de arquivos
 uploaded_files = st.file_uploader("Selecione os arquivos Excel", type=["xlsx"], accept_multiple_files=True)
@@ -88,6 +82,13 @@ if uploaded_files and pasta_saida:
     )
 
     st.success("Gráficos gerados! Baixe a pasta compactada acima.")
+
+# Botão para limpar histórico
+st.subheader("🗑️ Gerenciamento do Histórico")
+if st.button("Limpar Histórico de Gráficos", key="clear_history_button"):
+    for arq in os.listdir(HISTORICO_DIR):
+        os.remove(os.path.join(HISTORICO_DIR, arq))
+    st.rerun()
 
 # Exibir histórico de gráficos gerados
 st.subheader("📜 Histórico de gráficos gerados")
