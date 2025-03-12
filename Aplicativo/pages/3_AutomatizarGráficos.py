@@ -76,8 +76,8 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
 # Interface Streamlit
 st.set_page_config(page_title="Gerador de Gráficos", page_icon="📊")
 
-st.title("Gerador de Gráficos a partir de Arquivos Excel")
-st.write("Faça upload de um ou mais arquivos `.xlsx` para gerar gráficos automaticamente.")
+st.title("Gerador de Gráficos Z real x Z imaginário")
+st.write("Faça upload de um ou mais arquivos `.xlsx` gerados pela aba Conversor para gerar e editar gráficos automaticamente.")
 
 # Upload de arquivos
 uploaded_files = st.file_uploader("Selecione os arquivos Excel", type=["xlsx"], accept_multiple_files=True)
