@@ -39,10 +39,9 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
             plt.scatter(df["Zreal"], -df["Zimag"], marker=marcador, label=legenda)
             max_val = max(max_val, df["Zreal"].max(), df["Zimag"].max())
 
-            # Adicionar rótulo apenas no último ponto de cada conjunto de dados
             if exibir_rotulos and rotulo_pontos:
-                ultimo_ponto = df.iloc[-1]  # Última linha da tabela
-                plt.annotate(rotulo_pontos, 
+                ultimo_ponto = df.iloc[-1]
+                plt.annotate(rotulo_pontos,  
                              (ultimo_ponto["Zreal"], -ultimo_ponto["Zimag"]),
                              fontsize=9, ha='right', color='black')
 
@@ -59,15 +58,12 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
         plt.savefig(img_bytes, format="png", dpi=300)
         plt.close()
 
-        # Adicionar ao ZIP
         zipf.writestr(f"{titulo}.png", img_bytes.getvalue())
 
-        # Salvar no histórico
         historico_path = os.path.join(HISTORICO_DIR, f"{titulo}.png")
         with open(historico_path, "wb") as f:
             f.write(img_bytes.getvalue())
 
-        # Exibir pré-visualização no Streamlit SEM OPÇÃO DE DESATIVAR
         st.image(img_bytes.getvalue(), caption=titulo, use_container_width=True)
 
     except Exception as e:
@@ -77,10 +73,13 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
 st.set_page_config(page_title="Gerador de Gráficos", page_icon="📊")
 
 st.title("Gerador de Gráficos Z real x Z imaginário")
-st.write("Faça upload de um ou mais arquivos `.xlsx` gerados pela aba Conversor para gerar e editar gráficos automaticamente.")
+st.write("Faça upload de um ou mais arquivos `.xlsx` e gere gráficos automaticamente.")
 
 # Upload de arquivos
 uploaded_files = st.file_uploader("Selecione os arquivos Excel", type=["xlsx"], accept_multiple_files=True)
+
+# Entrada para o fator de área
+fator_area = st.number_input("Insira o fator de área para multiplicação dos valores:", min_value=0.0001, value=1.0)
 
 # Nome da pasta de saída
 pasta_saida = st.text_input("Nome da pasta de saída", "Graficos_Gerados")
@@ -89,7 +88,7 @@ pasta_saida = st.text_input("Nome da pasta de saída", "Graficos_Gerados")
 gerar_combinado = st.checkbox("Gerar gráfico combinado com todos os arquivos juntos")
 gerar_individual = st.checkbox("Gerar gráficos individuais para cada arquivo")
 
-# Configuração do toggle e entrada de texto
+# Configuração de rótulos e legenda
 exibir_rotulos = st.toggle("Exibir frequência nos últimos pontos")
 mostrar_legenda = st.checkbox("Mostrar legenda no gráfico", value=True)
 rotulo_pontos = ""
@@ -99,9 +98,6 @@ if exibir_rotulos:
 
 # Processamento dos arquivos
 if uploaded_files and pasta_saida:
-    arquivos_processados = []
-
-    # Criar arquivo ZIP temporário para salvar os gráficos
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
         dados_graficos = []
@@ -109,6 +105,7 @@ if uploaded_files and pasta_saida:
         for uploaded_file in uploaded_files:
             df = carregar_planilha(uploaded_file)
             if df is not None:
+                df[["Zreal", "Zimag"]] *= fator_area  # Aplicação do fator de multiplicação
                 titulo = f"{uploaded_file.name.replace('.xlsx', '')}_grafico"
                 dados_graficos.append((df, titulo))
 
@@ -118,10 +115,8 @@ if uploaded_files and pasta_saida:
         if gerar_combinado and dados_graficos:
             gerar_grafico_combinado(dados_graficos, f"{pasta_saida}_combinado", zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda)
 
-    # Finalizar ZIP
     zip_buffer.seek(0)
 
-    # Criar botão para baixar a pasta ZIP
     st.download_button(
         label="Baixar Pasta com os Gráficos",
         data=zip_buffer,
@@ -130,19 +125,4 @@ if uploaded_files and pasta_saida:
     )
 
     st.success("Gráficos gerados! Baixe a pasta compactada acima.")
-
-# Exibir histórico de gráficos gerados
-st.subheader("📜 Histórico de gráficos gerados")
-historico_arquivos = os.listdir(HISTORICO_DIR)
-if historico_arquivos:
-    for arq in historico_arquivos:
-        with open(os.path.join(HISTORICO_DIR, arq), "rb") as file:
-            st.download_button(
-                label=f"Baixar {arq}",
-                data=file,
-                file_name=arq,
-                mime="image/png"
-            )
-else:
-    st.write("Nenhum gráfico gerado ainda.")
 
