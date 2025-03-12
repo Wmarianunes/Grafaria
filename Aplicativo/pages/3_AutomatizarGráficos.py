@@ -79,7 +79,7 @@ st.write("Faça upload de um ou mais arquivos `.xlsx` e gere gráficos automatic
 uploaded_files = st.file_uploader("Selecione os arquivos Excel", type=["xlsx"], accept_multiple_files=True)
 
 # Entrada para o fator de área
-fator_area = st.number_input("Insira a área do corpo de prova:", min_value=0.0001, value=1.0)
+fator_area = st.number_input("Insira o fator de área para multiplicação dos valores:", min_value=0.0001, value=1.0)
 
 # Nome da pasta de saída
 pasta_saida = st.text_input("Nome da pasta de saída", "Graficos_Gerados")
@@ -125,4 +125,19 @@ if uploaded_files and pasta_saida:
     )
 
     st.success("Gráficos gerados! Baixe a pasta compactada acima.")
+
+# Exibir histórico de gráficos gerados
+st.subheader("📜 Histórico de gráficos gerados")
+historico_arquivos = os.listdir(HISTORICO_DIR)
+if historico_arquivos:
+    for arq in historico_arquivos:
+        with open(os.path.join(HISTORICO_DIR, arq), "rb") as file:
+            st.download_button(
+                label=f"Baixar {arq}",
+                data=file,
+                file_name=arq,
+                mime="image/png"
+            )
+else:
+    st.write("Nenhum gráfico gerado ainda.")
 
