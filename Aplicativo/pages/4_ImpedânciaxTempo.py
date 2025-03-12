@@ -4,6 +4,10 @@ import matplotlib.pyplot as plt
 import os
 from datetime import datetime
 
+# Criar diretório temporário para histórico de gráficos
+HISTORICO_DIR = "historico_graficos"
+os.makedirs(HISTORICO_DIR, exist_ok=True)
+
 # Função para carregar a planilha
 
 def carregar_planilha(uploaded_file):
@@ -135,3 +139,25 @@ def main():
 if __name__ == "__main__":
     main()
 
+
+# Exibir histórico de gráficos gerados
+st.subheader("📜 Histórico de gráficos gerados")
+historico_arquivos = os.listdir(HISTORICO_DIR)
+if historico_arquivos:
+    for arq in historico_arquivos:
+        with open(os.path.join(HISTORICO_DIR, arq), "rb") as file:
+            st.download_button(
+                label=f"Baixar {arq}",
+                data=file,
+                file_name=arq,
+                mime="image/png"
+            )
+else:
+    st.write("Nenhum gráfico gerado ainda.")
+
+# Botão para limpar histórico
+st.subheader("🗑️ Gerenciamento do Histórico")
+if st.button("Limpar Histórico de Gráficos", key="clear_history_button"):
+    for arq in os.listdir(HISTORICO_DIR):
+        os.remove(os.path.join(HISTORICO_DIR, arq))
+    st.rerun()
