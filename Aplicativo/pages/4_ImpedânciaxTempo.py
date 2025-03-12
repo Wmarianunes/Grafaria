@@ -97,7 +97,7 @@ def gerar_grafico_combinado(dados_graficos, titulo_grafico_combinado):
 
 def main():
     st.title("Gerador de Gráfico Impedância X Tempo")
-    st.write("Faça upload dos arquivos Excel covertidos na aba Conversor para processar os dados e gerar o gráfico combinado.")
+    st.write("Faça upload dos arquivos `.xlsx` covertidos na aba Conversor para processar os dados e gerar o gráfico Impedância X Tempo.")
 
     uploaded_files = st.file_uploader("Selecione os arquivos Excel", type=["xlsx", "xls"], accept_multiple_files=True)
     titulo_grafico_combinado = st.text_input("Título do Gráfico", "Gráfico ImpXTempo")
