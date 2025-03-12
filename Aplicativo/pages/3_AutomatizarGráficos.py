@@ -79,7 +79,7 @@ st.write("Faça upload de um ou mais arquivos `.xlsx` e gere gráficos automatic
 uploaded_files = st.file_uploader("Selecione os arquivos Excel", type=["xlsx"], accept_multiple_files=True)
 
 # Entrada para o fator de área
-fator_area = st.number_input("Insira o fator de área para multiplicação dos valores:", min_value=0.0001, value=1.0)
+fator_area = st.number_input("Insira a área do corpo de prova:", min_value=0.0001, value=1.0)
 
 # Nome da pasta de saída
 pasta_saida = st.text_input("Nome da pasta de saída", "Graficos_Gerados")
