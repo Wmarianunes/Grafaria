@@ -71,7 +71,7 @@ def selecionar_dados(df, data_hora_inicial, area):
 
 def gerar_grafico_combinado(dados_graficos, titulo_grafico_combinado):
     try:
-        cores = ['#FF4500', '#FF8C00', '#DAA520', '#D10D0D', '#6E0303', '#520B0B']
+        cores = ['#D10D0D']
         marcadores = ['o']
 
         dados_graficos = sorted(dados_graficos, key=lambda x: x[0])
