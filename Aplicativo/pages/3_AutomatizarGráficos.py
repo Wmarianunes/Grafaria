@@ -138,6 +138,11 @@ if historico_arquivos:
                 file_name=arq,
                 mime="image/png"
             )
+    
+    if st.button("Limpar Histórico"):
+        for arq in historico_arquivos:
+            os.remove(os.path.join(HISTORICO_DIR, arq))
+        st.experimental_rerun()
 else:
     st.write("Nenhum gráfico gerado ainda.")
 
