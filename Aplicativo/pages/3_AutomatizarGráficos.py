@@ -58,23 +58,23 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
 
 st.set_page_config(page_title="Gerador de Gráficos", page_icon="📊")
 
-st.title("Gerador de Gráficos a partir de Arquivos Excel")
-st.write("Faça upload de um ou mais arquivos `.xlsx` para gerar gráficos automaticamente.")
+st.title("Gerador de Gráficos Z real X Z imaginário")
+st.write("Faça upload de um ou mais arquivos `.xlsx` gerados na aba Conversor para criar gráficos automaticamente.")
 
 uploaded_files = st.file_uploader("Selecione os arquivos Excel", type=["xlsx"], accept_multiple_files=True)
 
 pasta_saida = st.text_input("Nome da pasta de saída", "Graficos_Gerados")
 
-multiplicador = st.number_input("Multiplicador para Zreal e Zimag", min_value=0.1, value=1.0, step=0.1)
+multiplicador = st.number_input("Área do corpo de prova:", min_value=0.1, value=1.0, step=0.1)
 
-gerar_combinado = st.checkbox("Gerar gráfico combinado (todos os arquivos juntos)")
+gerar_combinado = st.checkbox("Gerar gráfico combinando todos os arquivos juntos")
 gerar_individual = st.checkbox("Gerar gráficos individuais para cada arquivo")
 
-exibir_rotulos = st.toggle("Exibir rótulos nos últimos pontos")
+exibir_rotulos = st.toggle("Exibir valor da frequência nos últimos pontos")
 mostrar_legenda = st.checkbox("Mostrar legenda no gráfico", value=True)
 rotulo_pontos = ""
 if exibir_rotulos:
-    rotulo_pontos = st.text_input("Digite o rótulo para o último ponto de todos os gráficos:")
+    rotulo_pontos = st.text_input("Digite a frequência para o último ponto:")
 
 duas_colunas = st.checkbox("Exibir gráficos em duas colunas")
 
