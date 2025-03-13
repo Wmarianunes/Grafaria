@@ -18,7 +18,7 @@ def carregar_planilha(uploaded_file):
         st.error(f"Erro ao carregar a planilha: {e}")
         return None
 
-def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda):
+def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda, multiplicador):
     try:
         img_bytes = BytesIO()
         plt.figure(figsize=(8, 8))
@@ -27,6 +27,9 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
 
         for index, (df, legenda) in enumerate(dados_graficos):
             marcador = marcadores[index % len(marcadores)]
+            df = df.copy()
+            df["Zreal"] *= multiplicador
+            df["Zimag"] *= multiplicador
             plt.scatter(df["Zreal"], -df["Zimag"], marker=marcador, label=legenda)
             max_val = max(max_val, df["Zreal"].max(), df["Zimag"].max())
 
@@ -62,6 +65,8 @@ uploaded_files = st.file_uploader("Selecione os arquivos Excel", type=["xlsx"], 
 
 pasta_saida = st.text_input("Nome da pasta de saída", "Graficos_Gerados")
 
+multiplicador = st.number_input("Multiplicador para Zreal e Zimag", min_value=0.1, value=1.0, step=0.1)
+
 gerar_combinado = st.checkbox("Gerar gráfico combinado (todos os arquivos juntos)")
 gerar_individual = st.checkbox("Gerar gráficos individuais para cada arquivo")
 
@@ -85,12 +90,12 @@ if uploaded_files and pasta_saida:
                 titulo = f"{uploaded_file.name.replace('.xlsx', '')}_grafico"
                 dados_graficos.append((df, titulo))
                 if gerar_individual:
-                    img = gerar_grafico_combinado([(df, titulo)], titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda)
+                    img = gerar_grafico_combinado([(df, titulo)], titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda, multiplicador)
                     if img:
                         imagens.append((titulo, img))
 
         if gerar_combinado and dados_graficos:
-            img = gerar_grafico_combinado(dados_graficos, f"{pasta_saida}_combinado", zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda)
+            img = gerar_grafico_combinado(dados_graficos, f"{pasta_saida}_combinado", zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda, multiplicador)
             if img:
                 imagens.append((f"{pasta_saida}_combinado", img))
 
@@ -114,3 +119,4 @@ if uploaded_files and pasta_saida:
         else:
             for titulo, img in imagens:
                 st.image(img, caption=titulo, use_container_width=True)
+
