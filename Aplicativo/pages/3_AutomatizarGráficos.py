@@ -100,6 +100,29 @@ if exibir_rotulos:
 # Checkbox para visualizar em duas colunas
 visualizar_duas_colunas = st.checkbox("Visualizar gráficos em duas colunas")
 
+# Exibir gráficos de acordo com a escolha do usuário
+if uploaded_files:
+    imagens = []
+    for uploaded_file in uploaded_files:
+        df = carregar_planilha(uploaded_file)
+        if df is not None:
+            titulo = f"{uploaded_file.name.replace('.xlsx', '')}_grafico"
+            img = gerar_grafico_combinado([(df, titulo)], titulo, BytesIO(), exibir_rotulos, rotulo_pontos, mostrar_legenda)
+            if img:
+                imagens.append((titulo, img))
+
+    if imagens:
+        if visualizar_duas_colunas:
+            col1, col2 = st.columns(2)
+            for i, (titulo, img) in enumerate(imagens):
+                if i % 2 == 0:
+                    col1.image(img, caption=titulo, use_column_width=True)
+                else:
+                    col2.image(img, caption=titulo, use_column_width=True)
+        else:
+            for titulo, img in imagens:
+                st.image(img, caption=titulo, use_column_width=True)
+
 # Botão para limpar histórico
 st.subheader("🗑️ Gerenciamento do Histórico")
 if st.button("Limpar Histórico de Gráficos", key="clear_history_button"):
