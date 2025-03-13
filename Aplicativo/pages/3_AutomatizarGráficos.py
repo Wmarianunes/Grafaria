@@ -67,11 +67,11 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
         with open(historico_path, "wb") as f:
             f.write(img_bytes.getvalue())
 
-        # Exibir pré-visualização no Streamlit SEM OPÇÃO DE DESATIVAR
-        st.image(img_bytes.getvalue(), caption=titulo, use_container_width=True)
+        return img_bytes.getvalue()
 
     except Exception as e:
         st.error(f"Erro ao gerar gráfico combinado: {e}")
+        return None
 
 # Interface Streamlit
 st.set_page_config(page_title="Gerador de Gráficos", page_icon="📊")
@@ -99,12 +99,10 @@ if exibir_rotulos:
 
 # Processamento dos arquivos
 if uploaded_files and pasta_saida:
-    arquivos_processados = []
-
-    # Criar arquivo ZIP temporário para salvar os gráficos
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
         dados_graficos = []
+        imagens = []
 
         for uploaded_file in uploaded_files:
             df = carregar_planilha(uploaded_file)
@@ -113,10 +111,14 @@ if uploaded_files and pasta_saida:
                 dados_graficos.append((df, titulo))
 
                 if gerar_individual:
-                    gerar_grafico_combinado([(df, titulo)], titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda)
+                    img = gerar_grafico_combinado([(df, titulo)], titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda)
+                    if img:
+                        imagens.append((titulo, img))
 
         if gerar_combinado and dados_graficos:
-            gerar_grafico_combinado(dados_graficos, f"{pasta_saida}_combinado", zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda)
+            img = gerar_grafico_combinado(dados_graficos, f"{pasta_saida}_combinado", zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda)
+            if img:
+                imagens.append((f"{pasta_saida}_combinado", img))
 
     # Finalizar ZIP
     zip_buffer.seek(0)
@@ -131,18 +133,12 @@ if uploaded_files and pasta_saida:
 
     st.success("Gráficos gerados! Baixe a pasta compactada acima.")
 
-# Exibir histórico de gráficos gerados
-st.subheader("📜 Histórico de gráficos gerados")
-historico_arquivos = os.listdir(HISTORICO_DIR)
-if historico_arquivos:
-    for arq in historico_arquivos:
-        with open(os.path.join(HISTORICO_DIR, arq), "rb") as file:
-            st.download_button(
-                label=f"Baixar {arq}",
-                data=file,
-                file_name=arq,
-                mime="image/png"
-            )
-else:
-    st.write("Nenhum gráfico gerado ainda.")
+    # Exibir gráficos em duas colunas
+    if imagens:
+        col1, col2 = st.columns(2)
+        for i, (titulo, img) in enumerate(imagens):
+            if i % 2 == 0:
+                col1.image(img, caption=titulo, use_column_width=True)
+            else:
+                col2.image(img, caption=titulo, use_column_width=True)
 
