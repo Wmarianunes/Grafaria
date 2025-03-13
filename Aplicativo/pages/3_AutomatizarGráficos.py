@@ -42,7 +42,7 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
             # Adicionar rótulo apenas no último ponto de cada conjunto de dados
             if exibir_rotulos and rotulo_pontos:
                 ultimo_ponto = df.iloc[-1]  # Última linha da tabela
-                plt.annotate(rotulo_pontos, 
+                plt.annotate(rotulo_pontos,
                              (ultimo_ponto["Zreal"], -ultimo_ponto["Zimag"]),
                              fontsize=9, ha='right', color='black')
 
@@ -131,13 +131,11 @@ if uploaded_files and pasta_saida:
         mime="application/zip"
     )
 
-# Checkbox para visualizar em duas colunas
-visualizar_duas_colunas = st.checkbox("Visualizar gráficos em duas colunas")
-
     st.success("Gráficos gerados! Baixe a pasta compactada acima.")
 
     # Exibir gráficos de acordo com a escolha do usuário
     if imagens:
+        visualizar_duas_colunas = st.checkbox("Visualizar gráficos em duas colunas")
         if visualizar_duas_colunas:
             col1, col2 = st.columns(2)
             for i, (titulo, img) in enumerate(imagens):
@@ -163,11 +161,4 @@ if historico_arquivos:
             )
 else:
     st.write("Nenhum gráfico gerado ainda.")
-
-# Botão para limpar histórico
-st.subheader("🗑️ Gerenciamento do Histórico")
-if st.button("Limpar Histórico de Gráficos", key="clear_history_button"):
-    for arq in os.listdir(HISTORICO_DIR):
-        os.remove(os.path.join(HISTORICO_DIR, arq))
-    st.rerun()
 
