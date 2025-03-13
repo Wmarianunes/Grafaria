@@ -25,7 +25,26 @@ def criar_nome_seguro(titulo):
     """Gera um nome seguro para arquivos."""
     return "".join([c if c.isalnum() or c in (' ', '.', '_') else '_' for c in titulo])
 
-# Função para gerar gráfico combinado
+# Função para exibir gráficos no Streamlit (pré-visualização)
+def exibir_grafico_no_streamlit(df, titulo, exibir_rotulos, rotulo_pontos, mostrar_legenda):
+    """Exibe um gráfico individualmente no Streamlit."""
+    fig, ax = plt.subplots(figsize=(6, 4))
+    ax.plot(df["Zreal"], df["Zimag"], marker='o', linestyle='-', label=titulo)
+
+    if exibir_rotulos and not df.empty:
+        ax.annotate(rotulo_pontos, (df["Zreal"].iloc[-1], df["Zimag"].iloc[-1]), textcoords="offset points", xytext=(5,5), ha='right')
+
+    ax.set_xlabel("Z Real")
+    ax.set_ylabel("Z Imaginário")
+    ax.set_title(titulo)
+
+    if mostrar_legenda:
+        ax.legend()
+
+    ax.grid(True)
+    st.pyplot(fig)
+
+# Função para gerar gráficos e salvar no ZIP
 def gerar_grafico_combinado(dados_graficos, nome_arquivo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda):
     """Gera um gráfico combinado de vários arquivos e salva no arquivo ZIP."""
     plt.figure(figsize=(8, 6))
@@ -94,6 +113,11 @@ if uploaded_files and pasta_saida:
                 dados_graficos.append((df, titulo))
 
                 if gerar_individual:
+                    # Pré-visualizar gráfico no Streamlit antes de salvar no ZIP
+                    with st.expander(f"📊 Pré-visualização: {titulo}"):
+                        exibir_grafico_no_streamlit(df, titulo, exibir_rotulos, rotulo_pontos, mostrar_legenda)
+
+                    # Gerar e salvar no ZIP
                     gerar_grafico_combinado([(df, titulo)], titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda)
 
         if gerar_combinado and dados_graficos:
