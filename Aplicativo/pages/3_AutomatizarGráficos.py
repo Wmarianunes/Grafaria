@@ -9,25 +9,16 @@ from io import BytesIO
 HISTORICO_DIR = "historico_graficos"
 os.makedirs(HISTORICO_DIR, exist_ok=True)
 
-# Função para carregar a planilha
 def carregar_planilha(uploaded_file):
-    """Carrega a planilha Excel a partir do upload do usuário."""
     try:
-        df = pd.read_excel(uploaded_file, skiprows=5, usecols="A:B")  # Pegando colunas A e B, começando na linha 6
-        df.columns = ["Zreal", "Zimag"]  # Renomeia colunas
+        df = pd.read_excel(uploaded_file, skiprows=5, usecols="A:B")
+        df.columns = ["Zreal", "Zimag"]
         return df
     except Exception as e:
         st.error(f"Erro ao carregar a planilha: {e}")
         return None
 
-# Criar nome seguro para arquivos
-def criar_nome_seguro(titulo):
-    """Gera um nome seguro para arquivos."""
-    return "".join([c if c.isalnum() or c in (' ', '.', '_') else '_' for c in titulo])
-
-# Gerar gráfico combinado
 def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda):
-    """Gera e salva um gráfico combinado no ZIP, com opção de rótulos nos últimos pontos."""
     try:
         img_bytes = BytesIO()
         plt.figure(figsize=(8, 8))
@@ -39,10 +30,9 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
             plt.scatter(df["Zreal"], -df["Zimag"], marker=marcador, label=legenda)
             max_val = max(max_val, df["Zreal"].max(), df["Zimag"].max())
 
-            # Adicionar rótulo apenas no último ponto de cada conjunto de dados
             if exibir_rotulos and rotulo_pontos:
-                ultimo_ponto = df.iloc[-1]  # Última linha da tabela
-                plt.annotate(rotulo_pontos,
+                ultimo_ponto = df.iloc[-1]
+                plt.annotate(rotulo_pontos, 
                              (ultimo_ponto["Zreal"], -ultimo_ponto["Zimag"]),
                              fontsize=9, ha='right', color='black')
 
@@ -54,54 +44,35 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
         plt.ylabel("-Z imag (ohm.cm^2)")
         if mostrar_legenda:
             plt.legend()
-
         plt.title(titulo)
         plt.savefig(img_bytes, format="png", dpi=300)
         plt.close()
-        img_bytes.seek(0)
-
-        # Adicionar ao ZIP
         zipf.writestr(f"{titulo}.png", img_bytes.getvalue())
-
-        # Salvar no histórico
-        historico_path = os.path.join(HISTORICO_DIR, f"{titulo}.png")
-        with open(historico_path, "wb") as f:
-            f.write(img_bytes.getvalue())
-
         return img_bytes.getvalue()
-
     except Exception as e:
         st.error(f"Erro ao gerar gráfico combinado: {e}")
         return None
 
-# Interface Streamlit
 st.set_page_config(page_title="Gerador de Gráficos", page_icon="📊")
 
 st.title("Gerador de Gráficos a partir de Arquivos Excel")
 st.write("Faça upload de um ou mais arquivos `.xlsx` para gerar gráficos automaticamente.")
 
-# Upload de arquivos
 uploaded_files = st.file_uploader("Selecione os arquivos Excel", type=["xlsx"], accept_multiple_files=True)
 
-# Nome da pasta de saída
 pasta_saida = st.text_input("Nome da pasta de saída", "Graficos_Gerados")
 
-# Escolha de gráficos
 gerar_combinado = st.checkbox("Gerar gráfico combinado (todos os arquivos juntos)")
 gerar_individual = st.checkbox("Gerar gráficos individuais para cada arquivo")
 
-# Configuração do toggle e entrada de texto
 exibir_rotulos = st.toggle("Exibir rótulos nos últimos pontos")
 mostrar_legenda = st.checkbox("Mostrar legenda no gráfico", value=True)
 rotulo_pontos = ""
-
 if exibir_rotulos:
     rotulo_pontos = st.text_input("Digite o rótulo para o último ponto de todos os gráficos:")
 
-# Checkbox para visualizar em duas colunas
-visualizar_duas_colunas = st.checkbox("Visualizar gráficos em duas colunas")
+duas_colunas = st.checkbox("Exibir gráficos em duas colunas")
 
-# Processamento dos arquivos
 if uploaded_files and pasta_saida:
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
@@ -113,7 +84,6 @@ if uploaded_files and pasta_saida:
             if df is not None:
                 titulo = f"{uploaded_file.name.replace('.xlsx', '')}_grafico"
                 dados_graficos.append((df, titulo))
-
                 if gerar_individual:
                     img = gerar_grafico_combinado([(df, titulo)], titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda)
                     if img:
@@ -131,26 +101,17 @@ if uploaded_files and pasta_saida:
         file_name=f"{pasta_saida}.zip",
         mime="application/zip"
     )
+    st.success("Gráficos gerados! Baixe a pasta compactada acima.")
 
-# Botão para limpar histórico
-st.subheader("🗑️ Gerenciamento do Histórico")
-if st.button("Limpar Histórico de Gráficos", key="clear_history_button"):
-    for arq in os.listdir(HISTORICO_DIR):
-        os.remove(os.path.join(HISTORICO_DIR, arq))
-    st.rerun()
-
-# Exibir histórico de gráficos gerados
-st.subheader("📜 Histórico de gráficos gerados")
-historico_arquivos = os.listdir(HISTORICO_DIR)
-if historico_arquivos:
-    for arq in historico_arquivos:
-        with open(os.path.join(HISTORICO_DIR, arq), "rb") as file:
-            st.download_button(
-                label=f"Baixar {arq}",
-                data=file,
-                file_name=arq,
-                mime="image/png"
-            )
-else:
-    st.write("Nenhum gráfico gerado ainda.")
+    if imagens:
+        if duas_colunas:
+            col1, col2 = st.columns(2)
+            for i, (titulo, img) in enumerate(imagens):
+                if i % 2 == 0:
+                    col1.image(img, caption=titulo, use_column_width=True)
+                else:
+                    col2.image(img, caption=titulo, use_column_width=True)
+        else:
+            for titulo, img in imagens:
+                st.image(img, caption=titulo, use_column_width=True)
 
