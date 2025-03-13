@@ -149,3 +149,25 @@ if uploaded_files and pasta_saida:
             for titulo, img in imagens:
                 st.image(img, caption=titulo, use_container_width=True)
 
+# Exibir histórico de gráficos gerados
+st.subheader("📜 Histórico de gráficos gerados")
+historico_arquivos = os.listdir(HISTORICO_DIR)
+if historico_arquivos:
+    for arq in historico_arquivos:
+        with open(os.path.join(HISTORICO_DIR, arq), "rb") as file:
+            st.download_button(
+                label=f"Baixar {arq}",
+                data=file,
+                file_name=arq,
+                mime="image/png"
+            )
+else:
+    st.write("Nenhum gráfico gerado ainda.")
+
+# Botão para limpar histórico
+st.subheader("🗑️ Gerenciamento do Histórico")
+if st.button("Limpar Histórico de Gráficos", key="clear_history_button"):
+    for arq in os.listdir(HISTORICO_DIR):
+        os.remove(os.path.join(HISTORICO_DIR, arq))
+    st.rerun()
+
