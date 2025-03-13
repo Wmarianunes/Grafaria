@@ -58,6 +58,7 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
         plt.title(titulo)
         plt.savefig(img_bytes, format="png", dpi=300)
         plt.close()
+        img_bytes.seek(0)
 
         # Adicionar ao ZIP
         zipf.writestr(f"{titulo}.png", img_bytes.getvalue())
@@ -100,28 +101,36 @@ if exibir_rotulos:
 # Checkbox para visualizar em duas colunas
 visualizar_duas_colunas = st.checkbox("Visualizar gráficos em duas colunas")
 
-# Exibir gráficos de acordo com a escolha do usuário
-if uploaded_files:
-    imagens = []
-    for uploaded_file in uploaded_files:
-        df = carregar_planilha(uploaded_file)
-        if df is not None:
-            titulo = f"{uploaded_file.name.replace('.xlsx', '')}_grafico"
-            img = gerar_grafico_combinado([(df, titulo)], titulo, BytesIO(), exibir_rotulos, rotulo_pontos, mostrar_legenda)
-            if img:
-                imagens.append((titulo, img))
+# Processamento dos arquivos
+if uploaded_files and pasta_saida:
+    zip_buffer = BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
+        dados_graficos = []
+        imagens = []
 
-    if imagens:
-        if visualizar_duas_colunas:
-            col1, col2 = st.columns(2)
-            for i, (titulo, img) in enumerate(imagens):
-                if i % 2 == 0:
-                    col1.image(img, caption=titulo, use_column_width=True)
-                else:
-                    col2.image(img, caption=titulo, use_column_width=True)
-        else:
-            for titulo, img in imagens:
-                st.image(img, caption=titulo, use_column_width=True)
+        for uploaded_file in uploaded_files:
+            df = carregar_planilha(uploaded_file)
+            if df is not None:
+                titulo = f"{uploaded_file.name.replace('.xlsx', '')}_grafico"
+                dados_graficos.append((df, titulo))
+
+                if gerar_individual:
+                    img = gerar_grafico_combinado([(df, titulo)], titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda)
+                    if img:
+                        imagens.append((titulo, img))
+
+        if gerar_combinado and dados_graficos:
+            img = gerar_grafico_combinado(dados_graficos, f"{pasta_saida}_combinado", zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda)
+            if img:
+                imagens.append((f"{pasta_saida}_combinado", img))
+
+    zip_buffer.seek(0)
+    st.download_button(
+        label="Baixar Pasta com os Gráficos",
+        data=zip_buffer,
+        file_name=f"{pasta_saida}.zip",
+        mime="application/zip"
+    )
 
 # Botão para limpar histórico
 st.subheader("🗑️ Gerenciamento do Histórico")
