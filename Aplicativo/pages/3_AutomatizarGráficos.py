@@ -97,9 +97,6 @@ rotulo_pontos = ""
 if exibir_rotulos:
     rotulo_pontos = st.text_input("Digite o rótulo para o último ponto de todos os gráficos:")
 
-# Checkbox para visualizar em duas colunas
-visualizar_duas_colunas = st.checkbox("Visualizar gráficos em duas colunas")
-
 # Processamento dos arquivos
 if uploaded_files and pasta_saida:
     zip_buffer = BytesIO()
@@ -133,6 +130,9 @@ if uploaded_files and pasta_saida:
         file_name=f"{pasta_saida}.zip",
         mime="application/zip"
     )
+
+# Checkbox para visualizar em duas colunas
+visualizar_duas_colunas = st.checkbox("Visualizar gráficos em duas colunas")
 
     st.success("Gráficos gerados! Baixe a pasta compactada acima.")
 
