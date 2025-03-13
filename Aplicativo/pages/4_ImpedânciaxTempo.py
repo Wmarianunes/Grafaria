@@ -70,7 +70,7 @@ uploaded_files = st.file_uploader("Selecione os arquivos Excel", type=["xlsx", "
 titulo_grafico_combinado = st.text_input("Título do Gráfico", "Gráfico ImpXTempo")
 area = st.number_input("Área do Corpo de Prova", min_value=0.0, value=1.0, step=0.1)
 
-duas_colunas = st.checkbox("Exibir gráficos em duas colunas")
+mostrar_legenda = st.checkbox("Mostrar legenda no gráfico", value=True)
 
 if uploaded_files:
     datas_horas = []
@@ -103,26 +103,16 @@ if uploaded_files:
         plt.title(titulo_grafico_combinado)
         plt.xlabel("Tempo (horas)")
         plt.ylabel("Zreal (Ohm.cm²)")
-        plt.legend()
+        if mostrar_legenda:
+            plt.legend()
         
         img_bytes = BytesIO()
         plt.savefig(img_bytes, format="png", dpi=300)
         plt.close()
         imagens.append((titulo_grafico_combinado, img_bytes.getvalue()))
     
-    if imagens:
-        if duas_colunas:
-            col1, col2 = st.columns(2)
-            for i, (titulo, img) in enumerate(imagens):
-                if i % 2 == 0:
-                    col1.image(img, caption=titulo, use_container_width=True)
-                else:
-                    col2.image(img, caption=titulo, use_container_width=True)
-        else:
-            for titulo, img in imagens:
-                st.image(img, caption=titulo, use_container_width=True)
-
-
+    for titulo, img in imagens:
+        st.image(img, caption=titulo, use_container_width=True)
 
 
 
@@ -147,5 +137,3 @@ if st.button("Limpar Histórico de Gráficos", key="clear_history_button"):
     for arq in os.listdir(HISTORICO_DIR):
         os.remove(os.path.join(HISTORICO_DIR, arq))
     st.rerun()
-
-
