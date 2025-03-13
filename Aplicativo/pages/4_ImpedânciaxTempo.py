@@ -8,8 +8,6 @@ from datetime import datetime
 HISTORICO_DIR = "historico_graficos"
 os.makedirs(HISTORICO_DIR, exist_ok=True)
 
-# Função para carregar a planilha
-
 def carregar_planilha(uploaded_file):
     try:
         df = pd.read_excel(uploaded_file, header=None)
@@ -17,8 +15,6 @@ def carregar_planilha(uploaded_file):
     except Exception as e:
         st.error(f"Erro ao carregar a planilha: {e}")
         return None
-
-# Função para obter a data e a hora
 
 def obter_data_hora(df):
     try:
@@ -47,8 +43,6 @@ def obter_data_hora(df):
     except Exception:
         return None
 
-# Função para selecionar os dados
-
 def selecionar_dados(df, data_hora_inicial, area):
     try:
         ultima_linha_preenchida = df.iloc[:, 0].last_valid_index()
@@ -67,97 +61,63 @@ def selecionar_dados(df, data_hora_inicial, area):
     except Exception:
         return None, None
 
-# Função para gerar o gráfico
+st.title("Gerador de Gráfico Impedância X Tempo")
+st.write("Faça upload dos arquivos `.xlsx` convertidos na aba Conversor para processar os dados e visualizar o gráfico Impedância X Tempo.")
 
-def gerar_grafico_combinado(dados_graficos, titulo_grafico_combinado):
-    try:
-        cores = ['#D10D0D']
-        marcadores = ['o']
+uploaded_files = st.file_uploader("Selecione os arquivos Excel", type=["xlsx", "xls"], accept_multiple_files=True)
 
-        dados_graficos = sorted(dados_graficos, key=lambda x: x[0])
+titulo_grafico_combinado = st.text_input("Título do Gráfico", "Gráfico ImpXTempo")
+area = st.number_input("Área do Corpo de Prova", min_value=0.0, value=1.0, step=0.1)
 
-        plt.figure(figsize=(10, 6))
-        
-        for index, (eixo_x, eixo_y, legenda) in enumerate(dados_graficos):
-            marcador = marcadores[index % len(marcadores)]
-            cor = cores[index % len(cores)]
-            plt.scatter(eixo_x, eixo_y, marker=marcador, color=cor, label=legenda)
+duas_colunas = st.checkbox("Exibir gráficos em duas colunas")
 
-        plt.grid(True, which='both', linestyle='--', linewidth=0.5)
-        plt.title(titulo_grafico_combinado)
-        plt.xlabel("Tempo (horas)")
-        plt.ylabel("Zreal (Ohm.cm²)")
-        plt.tight_layout()
-
-        st.pyplot(plt)
-    except Exception as e:
-        st.error(f"Erro ao gerar gráfico: {e}")
-
-# Interface do Streamlit
-
-def main():
-    st.title("Gerador de Gráfico Impedância X Tempo")
-    st.write("Faça upload dos arquivos `.xlsx` covertidos na aba Conversor para processar os dados e gerar o gráfico Impedância X Tempo.")
-
-    uploaded_files = st.file_uploader("Selecione os arquivos Excel", type=["xlsx", "xls"], accept_multiple_files=True)
-    titulo_grafico_combinado = st.text_input("Título do Gráfico", "Gráfico ImpXTempo")
-    area = st.number_input("Área do Corpo de Prova", min_value=0.0, value=1.0, step=0.1)
-
-    if st.button("Gerar Gráfico"):
-        if not uploaded_files:
-            st.warning("Por favor, faça upload de pelo menos um arquivo Excel.")
-            return
-
-        datas_horas = []
-        dados_graficos = []
-        
-        for file in uploaded_files:
-            df = carregar_planilha(file)
-            if df is not None:
-                data_hora = obter_data_hora(df)
-                if data_hora:
-                    datas_horas.append((data_hora, file.name))
-
-        if not datas_horas:
-            st.error("Nenhuma data/hora válida foi encontrada nos arquivos.")
-            return
-
+if uploaded_files:
+    datas_horas = []
+    dados_graficos = []
+    imagens = []
+    
+    for file in uploaded_files:
+        df = carregar_planilha(file)
+        if df is not None:
+            data_hora = obter_data_hora(df)
+            if data_hora:
+                datas_horas.append((data_hora, file.name))
+    
+    if datas_horas:
         data_hora_inicial, _ = min(datas_horas, key=lambda x: x[0])
-
+        
         for file in uploaded_files:
             df = carregar_planilha(file)
             if df is not None:
                 eixo_x, eixo_y = selecionar_dados(df, data_hora_inicial, area)
                 if eixo_x is not None and eixo_y is not None:
                     dados_graficos.append((eixo_x, eixo_y, file.name))
-
-        if dados_graficos:
-            gerar_grafico_combinado(dados_graficos, titulo_grafico_combinado)
+    
+    if dados_graficos:
+        plt.figure(figsize=(10, 6))
+        for eixo_x, eixo_y, legenda in dados_graficos:
+            plt.scatter(eixo_x, eixo_y, label=legenda, color='#D10D0D', marker='o')
+        
+        plt.grid(True, linestyle='--', linewidth=0.5)
+        plt.title(titulo_grafico_combinado)
+        plt.xlabel("Tempo (horas)")
+        plt.ylabel("Zreal (Ohm.cm²)")
+        plt.legend()
+        
+        img_bytes = BytesIO()
+        plt.savefig(img_bytes, format="png", dpi=300)
+        plt.close()
+        imagens.append((titulo_grafico_combinado, img_bytes.getvalue()))
+    
+    if imagens:
+        if duas_colunas:
+            col1, col2 = st.columns(2)
+            for i, (titulo, img) in enumerate(imagens):
+                if i % 2 == 0:
+                    col1.image(img, caption=titulo, use_container_width=True)
+                else:
+                    col2.image(img, caption=titulo, use_container_width=True)
         else:
-            st.error("Nenhum dado válido encontrado nos arquivos.")
+            for titulo, img in imagens:
+                st.image(img, caption=titulo, use_container_width=True)
 
-if __name__ == "__main__":
-    main()
-
-
-# Exibir histórico de gráficos gerados
-st.subheader("📜 Histórico de gráficos gerados")
-historico_arquivos = os.listdir(HISTORICO_DIR)
-if historico_arquivos:
-    for arq in historico_arquivos:
-        with open(os.path.join(HISTORICO_DIR, arq), "rb") as file:
-            st.download_button(
-                label=f"Baixar {arq}",
-                data=file,
-                file_name=arq,
-                mime="image/png"
-            )
-else:
-    st.write("Nenhum gráfico gerado ainda.")
-
-# Botão para limpar histórico
-st.subheader("🗑️ Gerenciamento do Histórico")
-if st.button("Limpar Histórico de Gráficos", key="clear_history_button"):
-    for arq in os.listdir(HISTORICO_DIR):
-        os.remove(os.path.join(HISTORICO_DIR, arq))
-    st.rerun()
