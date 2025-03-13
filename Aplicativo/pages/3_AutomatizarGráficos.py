@@ -25,12 +25,39 @@ def criar_nome_seguro(titulo):
     """Gera um nome seguro para arquivos."""
     return "".join([c if c.isalnum() or c in (' ', '.', '_') else '_' for c in titulo])
 
+# Função para gerar gráfico combinado
+def gerar_grafico_combinado(dados_graficos, nome_arquivo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda):
+    """Gera um gráfico combinado de vários arquivos e salva no arquivo ZIP."""
+    plt.figure(figsize=(8, 6))
+
+    for df, titulo in dados_graficos:
+        plt.plot(df["Zreal"], df["Zimag"], marker='o', linestyle='-', label=titulo)
+
+        if exibir_rotulos:
+            plt.annotate(rotulo_pontos, (df["Zreal"].iloc[-1], df["Zimag"].iloc[-1]), textcoords="offset points", xytext=(5,5), ha='right')
+
+    plt.xlabel("Z Real")
+    plt.ylabel("Z Imaginário")
+    plt.title("Gráfico Combinado")
+    
+    if mostrar_legenda:
+        plt.legend()
+
+    plt.grid(True)
+
+    # Salvar imagem em memória antes de adicionar ao zip
+    img_buffer = BytesIO()
+    plt.savefig(img_buffer, format="png")
+    img_buffer.seek(0)
+
+    zipf.writestr(f"{nome_arquivo}.png", img_buffer.read())
+    plt.close()
+
 # Interface Streamlit
 st.set_page_config(page_title="Gerador de Gráficos", page_icon="📊")
 
 st.title("Gerador de Gráficos Z real x Z imaginário")
 st.write("Faça upload de um ou mais arquivos `.xlsx` e gere gráficos automaticamente.")
-
 
 # Upload de arquivos
 uploaded_files = st.file_uploader("Selecione os arquivos Excel", type=["xlsx"], accept_multiple_files=True)
