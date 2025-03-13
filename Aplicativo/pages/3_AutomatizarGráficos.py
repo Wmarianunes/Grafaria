@@ -25,82 +25,83 @@ def criar_nome_seguro(titulo):
     """Gera um nome seguro para arquivos."""
     return "".join([c if c.isalnum() or c in (' ', '.', '_') else '_' for c in titulo])
 
-# Função para exibir gráficos no Streamlit (pré-visualização)
-def exibir_grafico_no_streamlit(df, titulo, exibir_rotulos, rotulo_pontos, mostrar_legenda):
-    """Exibe um gráfico individualmente no Streamlit."""
-    fig, ax = plt.subplots(figsize=(6, 4))
-    ax.plot(df["Zreal"], df["Zimag"], marker='o', linestyle='-', label=titulo)
+# Gerar gráfico combinado
+def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda):
+    """Gera e salva um gráfico combinado no ZIP, com opção de rótulos nos últimos pontos."""
+    try:
+        img_bytes = BytesIO()
+        plt.figure(figsize=(8, 8))
+        max_val = 0
+        marcadores = ['o', '+', '*', '>', 'x', '^', 'v', '<', '|', '_', 's', 'D', 'p', 'h', 'H']
 
-    if exibir_rotulos and not df.empty:
-        ax.annotate(rotulo_pontos, (df["Zreal"].iloc[-1], df["Zimag"].iloc[-1]), textcoords="offset points", xytext=(5,5), ha='right')
+        for index, (df, legenda) in enumerate(dados_graficos):
+            marcador = marcadores[index % len(marcadores)]
+            plt.scatter(df["Zreal"], -df["Zimag"], marker=marcador, label=legenda)
+            max_val = max(max_val, df["Zreal"].max(), df["Zimag"].max())
 
-    ax.set_xlabel("Z Real")
-    ax.set_ylabel("Z Imaginário")
-    ax.set_title(titulo)
+            # Adicionar rótulo apenas no último ponto de cada conjunto de dados
+            if exibir_rotulos and rotulo_pontos:
+                ultimo_ponto = df.iloc[-1]  # Última linha da tabela
+                plt.annotate(rotulo_pontos, 
+                             (ultimo_ponto["Zreal"], -ultimo_ponto["Zimag"]),
+                             fontsize=9, ha='right', color='black')
 
-    if mostrar_legenda:
-        ax.legend()
+        plt.xlim(0, max_val * 1.1)
+        plt.ylim(0, max_val * 1.1)
+        plt.gca().set_aspect('equal', adjustable='box')
+        plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+        plt.xlabel("Z real (ohm.cm^2)")
+        plt.ylabel("-Z imag (ohm.cm^2)")
+        if mostrar_legenda:
+            plt.legend()
 
-    ax.grid(True)
-    st.pyplot(fig)
+        plt.title(titulo)
+        plt.savefig(img_bytes, format="png", dpi=300)
+        plt.close()
 
-# Função para gerar gráficos e salvar no ZIP
-def gerar_grafico_combinado(dados_graficos, nome_arquivo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda):
-    """Gera um gráfico combinado de vários arquivos e salva no arquivo ZIP."""
-    plt.figure(figsize=(8, 6))
+        # Adicionar ao ZIP
+        zipf.writestr(f"{titulo}.png", img_bytes.getvalue())
 
-    for df, titulo in dados_graficos:
-        plt.plot(df["Zreal"], df["Zimag"], marker='o', linestyle='-', label=titulo)
+        # Salvar no histórico
+        historico_path = os.path.join(HISTORICO_DIR, f"{titulo}.png")
+        with open(historico_path, "wb") as f:
+            f.write(img_bytes.getvalue())
 
-        if exibir_rotulos:
-            plt.annotate(rotulo_pontos, (df["Zreal"].iloc[-1], df["Zimag"].iloc[-1]), textcoords="offset points", xytext=(5,5), ha='right')
+        # Exibir pré-visualização no Streamlit SEM OPÇÃO DE DESATIVAR
+        st.image(img_bytes.getvalue(), caption=titulo, use_container_width=True)
 
-    plt.xlabel("Z Real")
-    plt.ylabel("Z Imaginário")
-    plt.title("Gráfico Combinado")
-    
-    if mostrar_legenda:
-        plt.legend()
-
-    plt.grid(True)
-
-    # Salvar imagem em memória antes de adicionar ao zip
-    img_buffer = BytesIO()
-    plt.savefig(img_buffer, format="png")
-    img_buffer.seek(0)
-
-    zipf.writestr(f"{nome_arquivo}.png", img_buffer.read())
-    plt.close()
+    except Exception as e:
+        st.error(f"Erro ao gerar gráfico combinado: {e}")
 
 # Interface Streamlit
 st.set_page_config(page_title="Gerador de Gráficos", page_icon="📊")
 
-st.title("Gerador de Gráficos Z real x Z imaginário")
-st.write("Faça upload de um ou mais arquivos `.xlsx` e gere gráficos automaticamente.")
+st.title("Gerador de Gráficos a partir de Arquivos Excel")
+st.write("Faça upload de um ou mais arquivos `.xlsx` para gerar gráficos automaticamente.")
 
 # Upload de arquivos
 uploaded_files = st.file_uploader("Selecione os arquivos Excel", type=["xlsx"], accept_multiple_files=True)
-
-# Entrada para o fator de área
-fator_area = st.number_input("Insira o fator de área para multiplicação dos valores:", min_value=0.0001, value=1.0)
 
 # Nome da pasta de saída
 pasta_saida = st.text_input("Nome da pasta de saída", "Graficos_Gerados")
 
 # Escolha de gráficos
-gerar_combinado = st.checkbox("Gerar gráfico combinado com todos os arquivos juntos")
+gerar_combinado = st.checkbox("Gerar gráfico combinado (todos os arquivos juntos)")
 gerar_individual = st.checkbox("Gerar gráficos individuais para cada arquivo")
 
-# Configuração de rótulos e legenda
-exibir_rotulos = st.toggle("Exibir frequência nos últimos pontos")
+# Configuração do toggle e entrada de texto
+exibir_rotulos = st.toggle("Exibir rótulos nos últimos pontos")
 mostrar_legenda = st.checkbox("Mostrar legenda no gráfico", value=True)
 rotulo_pontos = ""
 
 if exibir_rotulos:
-    rotulo_pontos = st.text_input("Digite a frequência para o último ponto de todos os gráficos:")
+    rotulo_pontos = st.text_input("Digite o rótulo para o último ponto de todos os gráficos:")
 
 # Processamento dos arquivos
 if uploaded_files and pasta_saida:
+    arquivos_processados = []
+
+    # Criar arquivo ZIP temporário para salvar os gráficos
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
         dados_graficos = []
@@ -108,23 +109,19 @@ if uploaded_files and pasta_saida:
         for uploaded_file in uploaded_files:
             df = carregar_planilha(uploaded_file)
             if df is not None:
-                df[["Zreal", "Zimag"]] *= fator_area  # Aplicação do fator de multiplicação
                 titulo = f"{uploaded_file.name.replace('.xlsx', '')}_grafico"
                 dados_graficos.append((df, titulo))
 
                 if gerar_individual:
-                    # Pré-visualizar gráfico no Streamlit antes de salvar no ZIP
-                    with st.expander(f"📊 Pré-visualização: {titulo}"):
-                        exibir_grafico_no_streamlit(df, titulo, exibir_rotulos, rotulo_pontos, mostrar_legenda)
-
-                    # Gerar e salvar no ZIP
                     gerar_grafico_combinado([(df, titulo)], titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda)
 
         if gerar_combinado and dados_graficos:
             gerar_grafico_combinado(dados_graficos, f"{pasta_saida}_combinado", zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda)
 
+    # Finalizar ZIP
     zip_buffer.seek(0)
 
+    # Criar botão para baixar a pasta ZIP
     st.download_button(
         label="Baixar Pasta com os Gráficos",
         data=zip_buffer,
@@ -148,11 +145,4 @@ if historico_arquivos:
             )
 else:
     st.write("Nenhum gráfico gerado ainda.")
-
-# Botão para limpar histórico
-st.subheader("🗑️ Gerenciamento do Histórico")
-if st.button("Limpar Histórico de Gráficos", key="clear_history_button"):
-    for arq in os.listdir(HISTORICO_DIR):
-        os.remove(os.path.join(HISTORICO_DIR, arq))
-    st.rerun()
 
