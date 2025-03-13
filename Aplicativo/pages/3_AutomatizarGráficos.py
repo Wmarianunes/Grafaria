@@ -97,55 +97,15 @@ rotulo_pontos = ""
 if exibir_rotulos:
     rotulo_pontos = st.text_input("Digite o rótulo para o último ponto de todos os gráficos:")
 
-# Processamento dos arquivos
-if uploaded_files and pasta_saida:
-    zip_buffer = BytesIO()
-    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
-        dados_graficos = []
-        imagens = []
+# Checkbox para visualizar em duas colunas
+visualizar_duas_colunas = st.checkbox("Visualizar gráficos em duas colunas")
 
-        for uploaded_file in uploaded_files:
-            df = carregar_planilha(uploaded_file)
-            if df is not None:
-                titulo = f"{uploaded_file.name.replace('.xlsx', '')}_grafico"
-                dados_graficos.append((df, titulo))
-
-                if gerar_individual:
-                    img = gerar_grafico_combinado([(df, titulo)], titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda)
-                    if img:
-                        imagens.append((titulo, img))
-
-        if gerar_combinado and dados_graficos:
-            img = gerar_grafico_combinado(dados_graficos, f"{pasta_saida}_combinado", zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda)
-            if img:
-                imagens.append((f"{pasta_saida}_combinado", img))
-
-    # Finalizar ZIP
-    zip_buffer.seek(0)
-
-    # Criar botão para baixar a pasta ZIP
-    st.download_button(
-        label="Baixar Pasta com os Gráficos",
-        data=zip_buffer,
-        file_name=f"{pasta_saida}.zip",
-        mime="application/zip"
-    )
-
-    st.success("Gráficos gerados! Baixe a pasta compactada acima.")
-
-    # Exibir gráficos de acordo com a escolha do usuário
-    if imagens:
-        visualizar_duas_colunas = st.checkbox("Visualizar gráficos em duas colunas")
-        if visualizar_duas_colunas:
-            col1, col2 = st.columns(2)
-            for i, (titulo, img) in enumerate(imagens):
-                if i % 2 == 0:
-                    col1.image(img, caption=titulo, use_container_width=True)
-                else:
-                    col2.image(img, caption=titulo, use_container_width=True)
-        else:
-            for titulo, img in imagens:
-                st.image(img, caption=titulo, use_container_width=True)
+# Botão para limpar histórico
+st.subheader("🗑️ Gerenciamento do Histórico")
+if st.button("Limpar Histórico de Gráficos", key="clear_history_button"):
+    for arq in os.listdir(HISTORICO_DIR):
+        os.remove(os.path.join(HISTORICO_DIR, arq))
+    st.rerun()
 
 # Exibir histórico de gráficos gerados
 st.subheader("📜 Histórico de gráficos gerados")
