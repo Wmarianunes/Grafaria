@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 from datetime import datetime
+from io import BytesIO
 
 # Criar diretório temporário para histórico de gráficos
 HISTORICO_DIR = "historico_graficos"
