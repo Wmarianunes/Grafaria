@@ -103,14 +103,14 @@ if uploaded_files and pasta_saida:
     )
     st.success("Gráficos gerados! Baixe a pasta compactada acima.")
 
-    if imagens:
-    if duas_colunas:
-        col1, col2 = st.columns(2)
-        for i, (titulo, img) in enumerate(imagens):
-            if i % 2 == 0:
-                col1.image(img, caption=titulo, use_container_width=True)
-            else:
-                col2.image(img, caption=titulo, use_container_width=True)
-    else:
-        for titulo, img in imagens:
-            st.image(img, caption=titulo, use_container_width=True)
+        if imagens:
+        if duas_colunas:
+            col1, col2 = st.columns(2)
+            for i, (titulo, img) in enumerate(imagens):
+                if i % 2 == 0:
+                    col1.image(img, caption=titulo, use_container_width=True)
+                else:
+                    col2.image(img, caption=titulo, use_container_width=True)
+        else:
+            for titulo, img in imagens:
+                st.image(img, caption=titulo, use_container_width=True)
