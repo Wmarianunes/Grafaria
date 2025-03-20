@@ -102,7 +102,7 @@ if uploaded_files:
         plt.grid(True, linestyle='--', linewidth=0.5)
         plt.title(titulo_grafico_combinado)
         plt.xlabel("Tempo (horas)")
-        plt.ylabel("Zreal (Ohm.cm²)")
+        plt.ylabel("-Zreal (Ohm.cm²)")
         if mostrar_legenda:
             plt.legend()
         
