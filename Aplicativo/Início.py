@@ -31,7 +31,7 @@ funcionalidades do site. Em cada aba haverá uma explicação sobre a
 
 • Plot de gráficos de Impedância x Tempo decorrido (Só aceita arquivos XLSX)
 
-• Plot de gráficos Z real x Z Imaginário (Só aceita arquivos XLSX)
+• Plot de gráficos -Z real x Z Imaginário (Só aceita arquivos XLSX)
 
 
 
