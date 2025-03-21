@@ -22,6 +22,9 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
     try:
         img_bytes = BytesIO()
 
+        # Ajuste para garantir que o grid seja quadrado
+        plt.figure(figsize=(8, 8))  # Mantém formato quadrado
+
         max_x = max_y = 0
 
         for df, _ in dados_graficos:
@@ -31,11 +34,6 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
             max_x = max(max_x, df["Zreal"].max())
             max_y = max(max_y, (-df["Zimag"]).max())
 
-        # Definir tamanho da imagem baseado na proporção dos dados
-        fig_width = 10  # Largura fixa
-        fig_height = max(6, fig_width * (max_y / max_x))  # Altura proporcional ao gráfico, mínimo 6
-
-        plt.figure(figsize=(fig_width, fig_height))
         marcadores = ['o', '+', '*', '>', 'x', '^', 'v', '<', '|', '_', 's', 'D', 'p', 'h', 'H']
 
         for index, (df, legenda) in enumerate(dados_graficos):
@@ -48,22 +46,19 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
                              (ultimo_ponto["Zreal"], -ultimo_ponto["Zimag"]),
                              fontsize=9, ha='right', color='black')
 
-        # Ajuste do limite Y para não desperdiçar espaço
-        if otimizar_espaco:
-            limite_y = max_y * 1.1  # Apenas até o maior valor de Y, sem excessos
-        else:
-            limite_y = max(max_x, max_y) * 1.1  # Mantém simetria se não otimizar
+        # Ajuste de limites sem margem extra
+        limite = max(max_x, max_y)  # O maior valor será o limite do gráfico
 
-        plt.xlim(0, max_x * 1.1)
-        plt.ylim(0, limite_y)
-        plt.gca().set_aspect('equal', adjustable='box')  # Mantém o grid quadrado
+        plt.xlim(0, limite)
+        plt.ylim(0, limite)
+        plt.gca().set_aspect('equal', adjustable='datalim')  # Mantém o grid quadrado sem margens extras
         plt.grid(True, which='both', linestyle='--', linewidth=0.5)
         plt.xlabel("Z real (ohm.cm^2)")
         plt.ylabel("-Z imag (ohm.cm^2)")
         if mostrar_legenda:
             plt.legend()
         plt.title(titulo)
-        plt.savefig(img_bytes, format="png", dpi=300)
+        plt.savefig(img_bytes, format="png", dpi=300, bbox_inches='tight', pad_inches=0)
         plt.close()
         zipf.writestr(f"{titulo}.png", img_bytes.getvalue())
         return img_bytes.getvalue()
@@ -83,7 +78,7 @@ gerar_combinado = st.checkbox("Gerar gráfico combinando todos os arquivos junto
 gerar_individual = st.checkbox("Gerar gráficos individuais para cada arquivo")
 exibir_rotulos = st.toggle("Exibir valor da frequência nos últimos pontos")
 mostrar_legenda = st.checkbox("Mostrar legenda no gráfico", value=True)
-otimizar_espaco = st.checkbox("Otimizar espaço do gráfico (limita Y ao necessário)")
+otimizar_espaco = st.checkbox("Otimizar espaço do gráfico (remover margem extra)")
 
 rotulo_pontos = ""
 if exibir_rotulos:
