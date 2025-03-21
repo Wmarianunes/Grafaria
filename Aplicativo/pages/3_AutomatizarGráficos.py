@@ -21,7 +21,19 @@ def carregar_planilha(uploaded_file):
 def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda, multiplicador, otimizar_espaco):
     try:
         img_bytes = BytesIO()
-        plt.figure(figsize=(8, 8))
+        
+        # Se otimizar espaço, calcular os limites reais dos dados e ajustar a figura proporcionalmente
+        if otimizar_espaco:
+            max_x = max(df["Zreal"].max() for df, _ in dados_graficos) * multiplicador
+            max_y = max((-df["Zimag"]).max() for df, _ in dados_graficos) * multiplicador
+            # Definir largura fixa e altura proporcional à razão entre max_y e max_x
+            fig_width = 8
+            fig_height = fig_width * (max_y / max_x) if max_x > 0 else 8
+            plt.figure(figsize=(fig_width, fig_height))
+        else:
+            plt.figure(figsize=(8, 8))
+        
+        # Para calcular o max_val (usado no caso sem otimização)
         max_val = 0
         marcadores = ['o', '+', '*', '>', 'x', '^', 'v', '<', '|', '_', 's', 'D', 'p', 'h', 'H']
 
@@ -31,7 +43,7 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
             df["Zreal"] *= multiplicador
             df["Zimag"] *= multiplicador
             plt.scatter(df["Zreal"], -df["Zimag"], marker=marcador, label=legenda)
-            max_val = max(max_val, df["Zreal"].max(), df["Zimag"].max())
+            max_val = max(max_val, df["Zreal"].max(), (-df["Zimag"]).max())
 
             if exibir_rotulos and rotulo_pontos:
                 ultimo_ponto = df.iloc[-1]
@@ -40,16 +52,15 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
                              fontsize=9, ha='right', color='black')
 
         if otimizar_espaco:
-            max_x = max(df["Zreal"].max() for df, _ in dados_graficos)
-            max_y = max((-df["Zimag"]).max() for df, _ in dados_graficos)
-            max_total = max(max_x, max_y) * 1.05
-            plt.xlim(0, max_total)
-            plt.ylim(0, max_total)
+            # Define limites baseados nos máximos reais dos dados, mantendo (0,0) como origem
+            plt.xlim(0, max_x * 1.05)
+            plt.ylim(0, max_y * 1.05)
         else:
             plt.xlim(0, max_val * 1.1)
             plt.ylim(0, max_val * 1.1)
+            # Se não otimizar, forçamos o gráfico a ser quadrado
+            plt.gca().set_aspect('equal', adjustable='box')
 
-        plt.gca().set_aspect('equal', adjustable='box')
         plt.grid(True, which='both', linestyle='--', linewidth=0.5)
         plt.xlabel("Z real (ohm.cm^2)")
         plt.ylabel("-Z imag (ohm.cm^2)")
@@ -151,4 +162,3 @@ if st.button("Limpar Histórico de Gráficos", key="clear_history_button"):
     for arq in os.listdir(HISTORICO_DIR):
         os.remove(os.path.join(HISTORICO_DIR, arq))
     st.rerun()
-
