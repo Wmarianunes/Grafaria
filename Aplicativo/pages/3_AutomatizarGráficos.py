@@ -21,19 +21,26 @@ def carregar_planilha(uploaded_file):
 def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda, multiplicador, otimizar_espaco):
     try:
         img_bytes = BytesIO()
-        plt.figure(figsize=(10, 6))  # Mantém o tamanho retangular da imagem
 
-        marcadores = ['o', '+', '*', '>', 'x', '^', 'v', '<', '|', '_', 's', 'D', 'p', 'h', 'H']
         max_x = max_y = 0
 
-        for index, (df, legenda) in enumerate(dados_graficos):
-            marcador = marcadores[index % len(marcadores)]
+        for df, _ in dados_graficos:
             df = df.copy()
             df["Zreal"] *= multiplicador
             df["Zimag"] *= multiplicador
-            plt.scatter(df["Zreal"], -df["Zimag"], marker=marcador, label=legenda)
             max_x = max(max_x, df["Zreal"].max())
             max_y = max(max_y, (-df["Zimag"]).max())
+
+        # Definir tamanho da imagem baseado na proporção dos dados
+        fig_width = 10  # Largura fixa
+        fig_height = max(6, fig_width * (max_y / max_x))  # Altura proporcional ao gráfico, mínimo 6
+
+        plt.figure(figsize=(fig_width, fig_height))
+        marcadores = ['o', '+', '*', '>', 'x', '^', 'v', '<', '|', '_', 's', 'D', 'p', 'h', 'H']
+
+        for index, (df, legenda) in enumerate(dados_graficos):
+            marcador = marcadores[index % len(marcadores)]
+            plt.scatter(df["Zreal"], -df["Zimag"], marker=marcador, label=legenda)
 
             if exibir_rotulos and rotulo_pontos:
                 ultimo_ponto = df.iloc[-1]
@@ -41,14 +48,15 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
                              (ultimo_ponto["Zreal"], -ultimo_ponto["Zimag"]),
                              fontsize=9, ha='right', color='black')
 
+        # Ajuste do limite Y para não desperdiçar espaço
         if otimizar_espaco:
-            limite = max_y * 1.1  # Ajuste fino no eixo Y
+            limite_y = max_y * 1.1  # Apenas até o maior valor de Y, sem excessos
         else:
-            limite = max(max_x, max_y) * 1.1  # Se não otimizar, mantém simétrico
+            limite_y = max(max_x, max_y) * 1.1  # Mantém simetria se não otimizar
 
-        plt.xlim(0, limite)
-        plt.ylim(0, limite)
-        plt.gca().set_aspect('equal', adjustable='box')  # Mantém o grid quadrado dentro da imagem retangular
+        plt.xlim(0, max_x * 1.1)
+        plt.ylim(0, limite_y)
+        plt.gca().set_aspect('equal', adjustable='box')  # Mantém o grid quadrado
         plt.grid(True, which='both', linestyle='--', linewidth=0.5)
         plt.xlabel("Z real (ohm.cm^2)")
         plt.ylabel("-Z imag (ohm.cm^2)")
@@ -75,7 +83,7 @@ gerar_combinado = st.checkbox("Gerar gráfico combinando todos os arquivos junto
 gerar_individual = st.checkbox("Gerar gráficos individuais para cada arquivo")
 exibir_rotulos = st.toggle("Exibir valor da frequência nos últimos pontos")
 mostrar_legenda = st.checkbox("Mostrar legenda no gráfico", value=True)
-otimizar_espaco = st.checkbox("Otimizar espaço do gráfico (ajuste automático do eixo Y)")
+otimizar_espaco = st.checkbox("Otimizar espaço do gráfico (limita Y ao necessário)")
 
 rotulo_pontos = ""
 if exibir_rotulos:
