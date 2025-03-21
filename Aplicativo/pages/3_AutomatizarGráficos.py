@@ -18,11 +18,12 @@ def carregar_planilha(uploaded_file):
         st.error(f"Erro ao carregar a planilha: {e}")
         return None
 
-def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda, multiplicador, otimizar_espaco):
+def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda, multiplicador, otimizar_espaco, otimizar_tamanho_grafico):
     try:
         img_bytes = BytesIO()
         plt.figure(figsize=(8, 8))
-        max_val = 0
+        max_x = 0
+        max_y = 0
         marcadores = ['o', '+', '*', '>', 'x', '^', 'v', '<', '|', '_', 's', 'D', 'p', 'h', 'H']
 
         for index, (df, legenda) in enumerate(dados_graficos):
@@ -31,7 +32,8 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
             df["Zreal"] *= multiplicador
             df["Zimag"] *= multiplicador
             plt.scatter(df["Zreal"], -df["Zimag"], marker=marcador, label=legenda)
-            max_val = max(max_val, df["Zreal"].max(), df["Zimag"].max())
+            max_x = max(max_x, df["Zreal"].max())
+            max_y = max(max_y, df["Zimag"].max())
 
             if exibir_rotulos and rotulo_pontos:
                 ultimo_ponto = df.iloc[-1]
@@ -39,8 +41,13 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
                              (ultimo_ponto["Zreal"], -ultimo_ponto["Zimag"]),
                              fontsize=9, ha='right', color='black')
 
-        plt.xlim(0, max_val * 1.1)
-        plt.ylim(0, max_val * 1.1)
+        plt.xlim(0, max_x * 1.1)
+
+        if otimizar_tamanho_grafico:
+            plt.ylim(0, max_y * 1.1)  # Ajusta apenas até o valor real máximo no eixo Y
+        else:
+            plt.ylim(0, max(max_x, max_y) * 1.1)  # Mantém a escala proporcional
+
         plt.gca().set_aspect('equal', adjustable='box')
         plt.grid(True, which='both', linestyle='--', linewidth=0.5)
         plt.xlabel("Z real (ohm.cm^2)")
@@ -78,6 +85,7 @@ if exibir_rotulos:
 
 duas_colunas = st.checkbox("Exibir gráficos em duas colunas")
 otimizar_espaco = st.checkbox("Otimizar espaço do gráfico")
+otimizar_tamanho_grafico = st.checkbox("Otimizar tamanho do gráfico")  # NOVA CHECKBOX
 
 if uploaded_files and pasta_saida:
     zip_buffer = BytesIO()
@@ -91,12 +99,12 @@ if uploaded_files and pasta_saida:
                 titulo = f"{uploaded_file.name.replace('.xlsx', '')}_grafico"
                 dados_graficos.append((df, titulo))
                 if gerar_individual:
-                    img = gerar_grafico_combinado([(df, titulo)], titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda, multiplicador, otimizar_espaco)
+                    img = gerar_grafico_combinado([(df, titulo)], titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda, multiplicador, otimizar_espaco, otimizar_tamanho_grafico)
                     if img:
                         imagens.append((titulo, img))
 
         if gerar_combinado and dados_graficos:
-            img = gerar_grafico_combinado(dados_graficos, f"{pasta_saida}_combinado", zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda, multiplicador, otimizar_espaco)
+            img = gerar_grafico_combinado(dados_graficos, f"{pasta_saida}_combinado", zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda, multiplicador, otimizar_espaco, otimizar_tamanho_grafico)
             if img:
                 imagens.append((f"{pasta_saida}_combinado", img))
 
