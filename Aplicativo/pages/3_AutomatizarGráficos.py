@@ -21,7 +21,8 @@ def carregar_planilha(uploaded_file):
 def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda, multiplicador, otimizar_espaco):
     try:
         img_bytes = BytesIO()
-        plt.figure(figsize=(8, 8))
+        plt.figure(figsize=(10, 6))  # Mantém o tamanho retangular da imagem
+
         marcadores = ['o', '+', '*', '>', 'x', '^', 'v', '<', '|', '_', 's', 'D', 'p', 'h', 'H']
         max_x = max_y = 0
 
@@ -41,13 +42,13 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
                              fontsize=9, ha='right', color='black')
 
         if otimizar_espaco:
-            limite = max_y * 1.05
+            limite = max_y * 1.1  # Ajuste fino no eixo Y
         else:
-            limite = max(max_x, max_y) * 1.1
+            limite = max(max_x, max_y) * 1.1  # Se não otimizar, mantém simétrico
 
         plt.xlim(0, limite)
         plt.ylim(0, limite)
-        plt.gca().set_aspect('equal', adjustable='box')
+        plt.gca().set_aspect('equal', adjustable='box')  # Mantém o grid quadrado dentro da imagem retangular
         plt.grid(True, which='both', linestyle='--', linewidth=0.5)
         plt.xlabel("Z real (ohm.cm^2)")
         plt.ylabel("-Z imag (ohm.cm^2)")
@@ -74,7 +75,7 @@ gerar_combinado = st.checkbox("Gerar gráfico combinando todos os arquivos junto
 gerar_individual = st.checkbox("Gerar gráficos individuais para cada arquivo")
 exibir_rotulos = st.toggle("Exibir valor da frequência nos últimos pontos")
 mostrar_legenda = st.checkbox("Mostrar legenda no gráfico", value=True)
-otimizar_espaco = st.checkbox("Otimizar espaço do gráfico (limite Y apenas até último ponto)")
+otimizar_espaco = st.checkbox("Otimizar espaço do gráfico (ajuste automático do eixo Y)")
 
 rotulo_pontos = ""
 if exibir_rotulos:
