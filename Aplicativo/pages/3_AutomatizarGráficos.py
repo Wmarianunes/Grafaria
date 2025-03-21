@@ -21,44 +21,34 @@ def carregar_planilha(uploaded_file):
 def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda, multiplicador, otimizar_espaco):
     try:
         img_bytes = BytesIO()
-
-        # Ajuste para garantir que o grid seja quadrado
-        plt.figure(figsize=(8, 8))  # Mantém formato quadrado
-
-        max_x = max_y = 0
-
-        for df, _ in dados_graficos:
-            df = df.copy()
-            df["Zreal"] *= multiplicador
-            df["Zimag"] *= multiplicador
-            max_x = max(max_x, df["Zreal"].max())
-            max_y = max(max_y, (-df["Zimag"]).max())
-
+        plt.figure(figsize=(8, 8))
+        max_val = 0
         marcadores = ['o', '+', '*', '>', 'x', '^', 'v', '<', '|', '_', 's', 'D', 'p', 'h', 'H']
 
         for index, (df, legenda) in enumerate(dados_graficos):
             marcador = marcadores[index % len(marcadores)]
+            df = df.copy()
+            df["Zreal"] *= multiplicador
+            df["Zimag"] *= multiplicador
             plt.scatter(df["Zreal"], -df["Zimag"], marker=marcador, label=legenda)
+            max_val = max(max_val, df["Zreal"].max(), df["Zimag"].max())
 
             if exibir_rotulos and rotulo_pontos:
                 ultimo_ponto = df.iloc[-1]
-                plt.annotate(rotulo_pontos, 
+                plt.annotate(rotulo_pontos,
                              (ultimo_ponto["Zreal"], -ultimo_ponto["Zimag"]),
                              fontsize=9, ha='right', color='black')
 
-        # Ajuste de limites sem margem extra
-        limite = max(max_x, max_y)  # O maior valor será o limite do gráfico
-
-        plt.xlim(0, limite)
-        plt.ylim(0, limite)
-        plt.gca().set_aspect('equal', adjustable='datalim')  # Mantém o grid quadrado sem margens extras
+        plt.xlim(0, max_val * 1.1)
+        plt.ylim(0, max_val * 1.1)
+        plt.gca().set_aspect('equal', adjustable='box')
         plt.grid(True, which='both', linestyle='--', linewidth=0.5)
         plt.xlabel("Z real (ohm.cm^2)")
         plt.ylabel("-Z imag (ohm.cm^2)")
         if mostrar_legenda:
             plt.legend()
         plt.title(titulo)
-        plt.savefig(img_bytes, format="png", dpi=300, bbox_inches='tight', pad_inches=0)
+        plt.savefig(img_bytes, format="png", dpi=300, bbox_inches='tight' if otimizar_espaco else None)
         plt.close()
         zipf.writestr(f"{titulo}.png", img_bytes.getvalue())
         return img_bytes.getvalue()
@@ -67,24 +57,27 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
         return None
 
 st.set_page_config(page_title="Gerador de Gráficos", page_icon="📊")
+
 st.title("Gerador de Gráficos Z real X Z imaginário")
 st.write("Faça upload de um ou mais arquivos `.xlsx` gerados na aba Conversor para criar gráficos automaticamente.")
 
 uploaded_files = st.file_uploader("Selecione os arquivos Excel", type=["xlsx"], accept_multiple_files=True)
+
 pasta_saida = st.text_input("Nome da pasta de saída", "Graficos_Gerados")
+
 multiplicador = st.number_input("Área do corpo de prova:", min_value=0.1, value=1.0, step=0.1)
 
 gerar_combinado = st.checkbox("Gerar gráfico combinando todos os arquivos juntos")
 gerar_individual = st.checkbox("Gerar gráficos individuais para cada arquivo")
+
 exibir_rotulos = st.toggle("Exibir valor da frequência nos últimos pontos")
 mostrar_legenda = st.checkbox("Mostrar legenda no gráfico", value=True)
-otimizar_espaco = st.checkbox("Otimizar espaço do gráfico (remover margem extra)")
-
 rotulo_pontos = ""
 if exibir_rotulos:
     rotulo_pontos = st.text_input("Digite a frequência para o último ponto:")
 
 duas_colunas = st.checkbox("Exibir gráficos em duas colunas")
+otimizar_espaco = st.checkbox("Otimizar espaço do gráfico")
 
 if uploaded_files and pasta_saida:
     zip_buffer = BytesIO()
@@ -149,4 +142,3 @@ if st.button("Limpar Histórico de Gráficos", key="clear_history_button"):
     for arq in os.listdir(HISTORICO_DIR):
         os.remove(os.path.join(HISTORICO_DIR, arq))
     st.rerun()
-
