@@ -1,3 +1,6 @@
+from textwrap import dedent
+
+codigo_editado = dedent("""
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -18,7 +21,7 @@ def carregar_planilha(uploaded_file):
         st.error(f"Erro ao carregar a planilha: {e}")
         return None
 
-def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda, multiplicador):
+def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda, multiplicador, otimizar_espaco):
     try:
         img_bytes = BytesIO()
         plt.figure(figsize=(8, 8))
@@ -35,7 +38,7 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
 
             if exibir_rotulos and rotulo_pontos:
                 ultimo_ponto = df.iloc[-1]
-                plt.annotate(rotulo_pontos, 
+                plt.annotate(rotulo_pontos,
                              (ultimo_ponto["Zreal"], -ultimo_ponto["Zimag"]),
                              fontsize=9, ha='right', color='black')
 
@@ -48,7 +51,7 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
         if mostrar_legenda:
             plt.legend()
         plt.title(titulo)
-        plt.savefig(img_bytes, format="png", dpi=300)
+        plt.savefig(img_bytes, format="png", dpi=300, bbox_inches='tight' if otimizar_espaco else None)
         plt.close()
         zipf.writestr(f"{titulo}.png", img_bytes.getvalue())
         return img_bytes.getvalue()
@@ -77,6 +80,7 @@ if exibir_rotulos:
     rotulo_pontos = st.text_input("Digite a frequência para o último ponto:")
 
 duas_colunas = st.checkbox("Exibir gráficos em duas colunas")
+otimizar_espaco = st.checkbox("Otimizar espaço do gráfico")
 
 if uploaded_files and pasta_saida:
     zip_buffer = BytesIO()
@@ -90,12 +94,12 @@ if uploaded_files and pasta_saida:
                 titulo = f"{uploaded_file.name.replace('.xlsx', '')}_grafico"
                 dados_graficos.append((df, titulo))
                 if gerar_individual:
-                    img = gerar_grafico_combinado([(df, titulo)], titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda, multiplicador)
+                    img = gerar_grafico_combinado([(df, titulo)], titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda, multiplicador, otimizar_espaco)
                     if img:
                         imagens.append((titulo, img))
 
         if gerar_combinado and dados_graficos:
-            img = gerar_grafico_combinado(dados_graficos, f"{pasta_saida}_combinado", zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda, multiplicador)
+            img = gerar_grafico_combinado(dados_graficos, f"{pasta_saida}_combinado", zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda, multiplicador, otimizar_espaco)
             if img:
                 imagens.append((f"{pasta_saida}_combinado", img))
 
@@ -120,8 +124,6 @@ if uploaded_files and pasta_saida:
             for titulo, img in imagens:
                 st.image(img, caption=titulo, use_container_width=True)
 
-
-
 # Exibir histórico de gráficos gerados
 st.subheader("📜 Histórico de gráficos gerados")
 historico_arquivos = os.listdir(HISTORICO_DIR)
@@ -143,4 +145,4 @@ if st.button("Limpar Histórico de Gráficos", key="clear_history_button"):
     for arq in os.listdir(HISTORICO_DIR):
         os.remove(os.path.join(HISTORICO_DIR, arq))
     st.rerun()
-
+""")
