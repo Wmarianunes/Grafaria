@@ -1,6 +1,6 @@
 from textwrap import dedent
 
-codigo_editado = dedent("""
+codigo_editado = dedent
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -145,4 +145,4 @@ if st.button("Limpar Histórico de Gráficos", key="clear_history_button"):
     for arq in os.listdir(HISTORICO_DIR):
         os.remove(os.path.join(HISTORICO_DIR, arq))
     st.rerun()
-""")
+
