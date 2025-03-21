@@ -1,6 +1,3 @@
-from textwrap import dedent
-
-codigo_editado = dedent
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -24,17 +21,32 @@ def carregar_planilha(uploaded_file):
 def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda, multiplicador, otimizar_espaco):
     try:
         img_bytes = BytesIO()
-        plt.figure(figsize=(8, 8))
-        max_val = 0
+
+        # Determinar os limites máximos e mínimos para ajustar a altura dinamicamente
+        max_zreal, max_zimag = 0, 0
+        min_zimag = float("inf")
+
+        for df, _ in dados_graficos:
+            df = df.copy()
+            df["Zreal"] *= multiplicador
+            df["Zimag"] *= multiplicador
+            max_zreal = max(max_zreal, df["Zreal"].max())
+            max_zimag = max(max_zimag, df["Zimag"].max())
+            min_zimag = min(min_zimag, df["Zimag"].min())
+
+        largura = 8  # Mantemos a largura fixa
+        altura = 8   # Altura padrão caso não precise otimização
+
+        if otimizar_espaco:
+            # Ajustar a altura dinamicamente com base no intervalo de Zimag
+            altura = max(4, (max_zimag - min_zimag) / max_zreal * largura)  # Mantém a proporção
+
+        plt.figure(figsize=(largura, altura))
         marcadores = ['o', '+', '*', '>', 'x', '^', 'v', '<', '|', '_', 's', 'D', 'p', 'h', 'H']
 
         for index, (df, legenda) in enumerate(dados_graficos):
             marcador = marcadores[index % len(marcadores)]
-            df = df.copy()
-            df["Zreal"] *= multiplicador
-            df["Zimag"] *= multiplicador
             plt.scatter(df["Zreal"], -df["Zimag"], marker=marcador, label=legenda)
-            max_val = max(max_val, df["Zreal"].max(), df["Zimag"].max())
 
             if exibir_rotulos and rotulo_pontos:
                 ultimo_ponto = df.iloc[-1]
@@ -42,16 +54,16 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
                              (ultimo_ponto["Zreal"], -ultimo_ponto["Zimag"]),
                              fontsize=9, ha='right', color='black')
 
-        plt.xlim(0, max_val * 1.1)
-        plt.ylim(0, max_val * 1.1)
-        plt.gca().set_aspect('equal', adjustable='box')
+        plt.xlim(0, max_zreal * 1.1)
+        plt.ylim(-max_zimag * 1.1, -min_zimag * 1.1)  # Ajusta o Y para evitar espaços desnecessários
+        plt.gca().set_aspect('auto', adjustable='datalim')
         plt.grid(True, which='both', linestyle='--', linewidth=0.5)
         plt.xlabel("Z real (ohm.cm^2)")
         plt.ylabel("-Z imag (ohm.cm^2)")
         if mostrar_legenda:
             plt.legend()
         plt.title(titulo)
-        plt.savefig(img_bytes, format="png", dpi=300, bbox_inches='tight' if otimizar_espaco else None)
+        plt.savefig(img_bytes, format="png", dpi=300, bbox_inches='tight')
         plt.close()
         zipf.writestr(f"{titulo}.png", img_bytes.getvalue())
         return img_bytes.getvalue()
