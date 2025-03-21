@@ -1,6 +1,3 @@
-from textwrap import dedent
-
-codigo_editado = dedent
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -38,12 +35,20 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
 
             if exibir_rotulos and rotulo_pontos:
                 ultimo_ponto = df.iloc[-1]
-                plt.annotate(rotulo_pontos,
+                plt.annotate(rotulo_pontos, 
                              (ultimo_ponto["Zreal"], -ultimo_ponto["Zimag"]),
                              fontsize=9, ha='right', color='black')
 
-        plt.xlim(0, max_val * 1.1)
-        plt.ylim(0, max_val * 1.1)
+        if otimizar_espaco:
+            max_x = max(df["Zreal"].max() for df, _ in dados_graficos)
+            max_y = max((-df["Zimag"]).max() for df, _ in dados_graficos)
+            max_total = max(max_x, max_y) * 1.05
+            plt.xlim(0, max_total)
+            plt.ylim(0, max_total)
+        else:
+            plt.xlim(0, max_val * 1.1)
+            plt.ylim(0, max_val * 1.1)
+
         plt.gca().set_aspect('equal', adjustable='box')
         plt.grid(True, which='both', linestyle='--', linewidth=0.5)
         plt.xlabel("Z real (ohm.cm^2)")
@@ -51,7 +56,7 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
         if mostrar_legenda:
             plt.legend()
         plt.title(titulo)
-        plt.savefig(img_bytes, format="png", dpi=300, bbox_inches='tight' if otimizar_espaco else None)
+        plt.savefig(img_bytes, format="png", dpi=300)
         plt.close()
         zipf.writestr(f"{titulo}.png", img_bytes.getvalue())
         return img_bytes.getvalue()
@@ -75,12 +80,13 @@ gerar_individual = st.checkbox("Gerar gráficos individuais para cada arquivo")
 
 exibir_rotulos = st.toggle("Exibir valor da frequência nos últimos pontos")
 mostrar_legenda = st.checkbox("Mostrar legenda no gráfico", value=True)
+otimizar_espaco = st.checkbox("Otimizar espaço do gráfico (reduzir margens)")
+
 rotulo_pontos = ""
 if exibir_rotulos:
     rotulo_pontos = st.text_input("Digite a frequência para o último ponto:")
 
 duas_colunas = st.checkbox("Exibir gráficos em duas colunas")
-otimizar_espaco = st.checkbox("Otimizar espaço do gráfico")
 
 if uploaded_files and pasta_saida:
     zip_buffer = BytesIO()
@@ -145,3 +151,4 @@ if st.button("Limpar Histórico de Gráficos", key="clear_history_button"):
     for arq in os.listdir(HISTORICO_DIR):
         os.remove(os.path.join(HISTORICO_DIR, arq))
     st.rerun()
+
