@@ -21,21 +21,9 @@ def carregar_planilha(uploaded_file):
 def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo_pontos, mostrar_legenda, multiplicador, otimizar_espaco):
     try:
         img_bytes = BytesIO()
-        
-        # Se otimizar espaço, calcular os limites reais dos dados e ajustar a figura proporcionalmente
-        if otimizar_espaco:
-            max_x = max(df["Zreal"].max() for df, _ in dados_graficos) * multiplicador
-            max_y = max((-df["Zimag"]).max() for df, _ in dados_graficos) * multiplicador
-            # Definir largura fixa e altura proporcional à razão entre max_y e max_x
-            fig_width = 8
-            fig_height = fig_width * (max_y / max_x) if max_x > 0 else 8
-            plt.figure(figsize=(fig_width, fig_height))
-        else:
-            plt.figure(figsize=(8, 8))
-        
-        # Para calcular o max_val (usado no caso sem otimização)
-        max_val = 0
+        plt.figure(figsize=(8, 8))
         marcadores = ['o', '+', '*', '>', 'x', '^', 'v', '<', '|', '_', 's', 'D', 'p', 'h', 'H']
+        max_x = max_y = 0
 
         for index, (df, legenda) in enumerate(dados_graficos):
             marcador = marcadores[index % len(marcadores)]
@@ -43,7 +31,8 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
             df["Zreal"] *= multiplicador
             df["Zimag"] *= multiplicador
             plt.scatter(df["Zreal"], -df["Zimag"], marker=marcador, label=legenda)
-            max_val = max(max_val, df["Zreal"].max(), (-df["Zimag"]).max())
+            max_x = max(max_x, df["Zreal"].max())
+            max_y = max(max_y, (-df["Zimag"]).max())
 
             if exibir_rotulos and rotulo_pontos:
                 ultimo_ponto = df.iloc[-1]
@@ -52,15 +41,13 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
                              fontsize=9, ha='right', color='black')
 
         if otimizar_espaco:
-            # Define limites baseados nos máximos reais dos dados, mantendo (0,0) como origem
-            plt.xlim(0, max_x * 1.05)
-            plt.ylim(0, max_y * 1.05)
+            limite = max_y * 1.05
         else:
-            plt.xlim(0, max_val * 1.1)
-            plt.ylim(0, max_val * 1.1)
-            # Se não otimizar, forçamos o gráfico a ser quadrado
-            plt.gca().set_aspect('equal', adjustable='box')
+            limite = max(max_x, max_y) * 1.1
 
+        plt.xlim(0, limite)
+        plt.ylim(0, limite)
+        plt.gca().set_aspect('equal', adjustable='box')
         plt.grid(True, which='both', linestyle='--', linewidth=0.5)
         plt.xlabel("Z real (ohm.cm^2)")
         plt.ylabel("-Z imag (ohm.cm^2)")
@@ -76,22 +63,18 @@ def gerar_grafico_combinado(dados_graficos, titulo, zipf, exibir_rotulos, rotulo
         return None
 
 st.set_page_config(page_title="Gerador de Gráficos", page_icon="📊")
-
 st.title("Gerador de Gráficos Z real X Z imaginário")
 st.write("Faça upload de um ou mais arquivos `.xlsx` gerados na aba Conversor para criar gráficos automaticamente.")
 
 uploaded_files = st.file_uploader("Selecione os arquivos Excel", type=["xlsx"], accept_multiple_files=True)
-
 pasta_saida = st.text_input("Nome da pasta de saída", "Graficos_Gerados")
-
 multiplicador = st.number_input("Área do corpo de prova:", min_value=0.1, value=1.0, step=0.1)
 
 gerar_combinado = st.checkbox("Gerar gráfico combinando todos os arquivos juntos")
 gerar_individual = st.checkbox("Gerar gráficos individuais para cada arquivo")
-
 exibir_rotulos = st.toggle("Exibir valor da frequência nos últimos pontos")
 mostrar_legenda = st.checkbox("Mostrar legenda no gráfico", value=True)
-otimizar_espaco = st.checkbox("Otimizar espaço do gráfico (reduzir margens)")
+otimizar_espaco = st.checkbox("Otimizar espaço do gráfico (limite Y apenas até último ponto)")
 
 rotulo_pontos = ""
 if exibir_rotulos:
@@ -162,3 +145,4 @@ if st.button("Limpar Histórico de Gráficos", key="clear_history_button"):
     for arq in os.listdir(HISTORICO_DIR):
         os.remove(os.path.join(HISTORICO_DIR, arq))
     st.rerun()
+
